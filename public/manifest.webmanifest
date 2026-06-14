@@ -1,0 +1,9 @@
+{
+  "name": "Bé Mind AI",
+  "short_name": "Bé Mind",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f8f7ff",
+  "theme_color": "#7c3aed",
+  "icons": []
+}

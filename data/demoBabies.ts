@@ -1,0 +1,36 @@
+import type { BabyProfile } from "@/types/baby";
+
+export const demoBabies: BabyProfile[] = [
+  {
+    id: "baby-a",
+    name: "Bé A",
+    nickname: "Anh Hai",
+    gender: "boy",
+    birthDate: "2025-10-01",
+    avatar: "👶🏻",
+    birthWeightKg: 2.5,
+    birthHeightCm: 48,
+    currentWeightKg: 7.8,
+    currentHeightCm: 72,
+    developmentScore: 92,
+    sleepHoursToday: 11.2,
+    milkTodayMl: 720,
+    note: "Bé ăn ngủ tốt, phản ứng nhanh với âm thanh.",
+  },
+  {
+    id: "baby-b",
+    name: "Bé B",
+    nickname: "Em Út",
+    gender: "girl",
+    birthDate: "2025-10-01",
+    avatar: "👶",
+    birthWeightKg: 2.3,
+    birthHeightCm: 47,
+    currentWeightKg: 7.4,
+    currentHeightCm: 70,
+    developmentScore: 85,
+    sleepHoursToday: 10.6,
+    milkTodayMl: 650,
+    note: "Cần theo dõi thêm lượng sữa mỗi ngày.",
+  },
+];
