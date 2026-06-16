@@ -1,33 +1,43 @@
-export type VaccineDoseStatus = "upcoming" | "due" | "overdue" | "completed";
+import type { BabyId } from "./baby";
 
-export type VaccineScheduleItem = {
+export type VaccineStatus = "completed" | "upcoming" | "overdue";
+export type VaccineReactionSeverity = "mild" | "moderate" | "severe";
+
+export interface VaccineDose {
   id: string;
   name: string;
   disease: string;
   recommendedAgeMonths: number;
-  dose: string;
+  doseLabel: string;
   description: string;
-};
+}
 
-export type BabyVaccineRecord = {
+export interface BabyVaccineRecord {
   id: string;
-  babyId: string;
+  babyId: BabyId;
   vaccineId: string;
-  completedAt: string;
+  scheduledDate: string;
+  completedDate?: string;
+  status: VaccineStatus;
+  location?: string;
   note?: string;
-};
+}
 
-export type VaccineStatusItem = VaccineScheduleItem & {
-  status: VaccineDoseStatus;
-  daysUntilDue: number;
-  completedAt?: string;
+export interface VaccineReaction {
+  id: string;
+  babyId: BabyId;
+  vaccineRecordId: string;
+  symptom: string;
+  severity: VaccineReactionSeverity;
+  temperature?: number;
   note?: string;
-};
+  createdAt: string;
+}
 
-export type TwinVaccineSummary = {
-  completedA: number;
-  completedB: number;
-  total: number;
-  message: string;
-  status: "balanced" | "watch";
-};
+export interface VaccineSummary {
+  completedCount: number;
+  upcomingCount: number;
+  overdueCount: number;
+  nextVaccineTitle: string;
+  nextVaccineDate?: string;
+}

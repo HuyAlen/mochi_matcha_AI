@@ -1,37 +1,25 @@
-export type GrowthMetric = "weight" | "height";
+import type { BabyId } from "./baby";
 
-export type GrowthRecord = {
+export type HealthEventType =
+  | "fever"
+  | "cough"
+  | "medicine"
+  | "doctor_visit"
+  | "vaccine_reaction";
+
+export interface HealthEvent {
   id: string;
-  babyId: string;
-  date: string;
-  ageMonths: number;
-  weightKg: number;
-  heightCm: number;
-};
+  babyId: BabyId;
+  type: HealthEventType;
+  title: string;
+  value?: string;
+  note?: string;
+  createdAt: string;
+}
 
-export type WHOReferencePoint = {
-  ageMonths: number;
-  p3: number;
-  p15: number;
-  p50: number;
-  p85: number;
-  p97: number;
-};
-
-export type GrowthAssessmentStatus = "low" | "normal" | "high" | "watch";
-
-export type GrowthAssessment = {
-  metric: GrowthMetric;
-  value: number;
-  ageMonths: number;
-  percentileLabel: string;
-  status: GrowthAssessmentStatus;
-  message: string;
-};
-
-export type TwinGrowthComparison = {
-  weightDiffKg: number;
-  heightDiffCm: number;
-  message: string;
-  status: "balanced" | "watch";
-};
+export interface HealthSummary {
+  feverCount: number;
+  medicineCount: number;
+  doctorVisitCount: number;
+  latestNote: string;
+}

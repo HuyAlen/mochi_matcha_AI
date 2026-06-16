@@ -1,20 +1,14 @@
-export type BabyGender = "boy" | "girl" | "other";
+export type BabyId = "mochi" | "matcha";
 
-export type BabyProfile = {
-  id: string;
+export type BabyGender = "female";
+
+export interface Baby {
+  id: BabyId;
   name: string;
   nickname: string;
   gender: BabyGender;
   birthDate: string;
-  avatar: string;
+  avatarEmoji: string;
   birthWeightKg: number;
   birthHeightCm: number;
-  currentWeightKg: number;
-  currentHeightCm: number;
-  developmentScore: number;
-  sleepHoursToday: number;
-  milkTodayMl: number;
-  note?: string;
-};
-
-export type Baby = BabyProfile;
+}

@@ -1,44 +1,35 @@
-import type { BabyProfile } from "@/types/baby";
-import type { TrackingLog } from "@/store/trackingStore";
+import type { BabyId } from "./baby";
 
-export type AICoachMetric = {
+export type AIInsightCategory =
+  | "nutrition"
+  | "sleep"
+  | "growth"
+  | "tracking"
+  | "twin_compare"
+  | "reminder";
+
+export type AIInsightSeverity = "info" | "positive" | "warning";
+
+export interface AIInsight {
+  id: string;
+  category: AIInsightCategory;
+  severity: AIInsightSeverity;
+  babyId?: BabyId;
+  title: string;
+  description: string;
+  recommendation: string;
+  createdAt: string;
+}
+
+export interface AIQuickQuestion {
+  id: string;
   label: string;
-  value: string;
-  status: "good" | "warning" | "danger" | "neutral";
-  description: string;
-};
+  prompt: string;
+}
 
-export type AICoachInsight = {
-  title: string;
-  description: string;
-  priority: "high" | "medium" | "low";
-};
-
-export type AICoachPlanItem = {
-  title: string;
-  description: string;
-  duration: string;
-};
-
-export type TwinComparison = {
-  title: string;
-  description: string;
-  status: "balanced" | "watch";
-};
-
-export type AICoachReport = {
-  baby: BabyProfile;
-  generatedAt: string;
-  score: number;
-  summary: string;
-  metrics: AICoachMetric[];
-  insights: AICoachInsight[];
-  plan: AICoachPlanItem[];
-  twinComparison?: TwinComparison;
-};
-
-export type AICoachInput = {
-  activeBaby: BabyProfile;
-  allBabies: BabyProfile[];
-  logs: TrackingLog[];
-};
+export interface AIChatMessage {
+  id: string;
+  role: "user" | "ai";
+  content: string;
+  createdAt: string;
+}
