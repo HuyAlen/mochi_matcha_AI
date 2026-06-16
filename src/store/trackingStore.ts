@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import type { BabyId } from "@/types/baby";
 import type { TrackingEntry, TrackingType } from "@/types/tracking";
+export type TrackingLog = TrackingEntry;
 
 interface TrackingState {
   entries: TrackingEntry[];

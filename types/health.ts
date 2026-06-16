@@ -23,3 +23,12 @@ export interface HealthSummary {
   doctorVisitCount: number;
   latestNote: string;
 }
+
+export interface WHOReferencePoint {
+  ageMonths: number;
+  p3: number;
+  p15: number;
+  p50: number;
+  p85: number;
+  p97: number;
+}
