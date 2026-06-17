@@ -1,14 +1,23 @@
 "use client";
 
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type { BabyId } from "@/types/baby";
-import type { TrackingEntry, TrackingType } from "@/types/tracking";
+import type {
+  TrackingEntry,
+  TrackingTodaySummary,
+  TrackingType,
+} from "@/types/tracking";
+
 export type TrackingLog = TrackingEntry;
 
 interface TrackingState {
   entries: TrackingEntry[];
   addEntry: (entry: Omit<TrackingEntry, "id" | "createdAt">) => void;
+  deleteEntry: (entryId: string) => void;
+  clearDemoEntries: () => void;
   getTodayEntries: (babyId?: BabyId) => TrackingEntry[];
+  getTodaySummary: (babyId?: BabyId) => TrackingTodaySummary;
 }
 
 function isToday(date: string) {
@@ -22,79 +31,124 @@ function isToday(date: string) {
   );
 }
 
+const now = new Date().toISOString();
+
 const demoEntries: TrackingEntry[] = [
   {
-    id: "demo-1",
+    id: "demo-mochi-milk",
     babyId: "mochi",
     type: "milk",
-    value: 520,
+    value: 120,
     unit: "ml",
-    createdAt: new Date().toISOString(),
+    note: "Bé bú tốt",
+    createdAt: now,
   },
   {
-    id: "demo-2",
+    id: "demo-mochi-sleep",
+    babyId: "mochi",
+    type: "sleep",
+    value: 1.5,
+    unit: "giờ",
+    note: "Ngủ trưa",
+    createdAt: now,
+  },
+  {
+    id: "demo-matcha-milk",
     babyId: "matcha",
     type: "milk",
-    value: 480,
+    value: 90,
     unit: "ml",
-    createdAt: new Date().toISOString(),
+    note: "Bú bình",
+    createdAt: now,
   },
   {
-    id: "demo-3",
-    babyId: "mochi",
-    type: "sleep",
-    value: 11.5,
-    unit: "giờ",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-4",
+    id: "demo-matcha-diaper",
     babyId: "matcha",
-    type: "sleep",
-    value: 12.7,
-    unit: "giờ",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-5",
-    babyId: "mochi",
-    type: "meal",
-    value: 3,
-    unit: "bữa",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-6",
-    babyId: "matcha",
-    type: "meal",
-    value: 2,
-    unit: "bữa",
-    createdAt: new Date().toISOString(),
+    type: "diaper",
+    value: 1,
+    unit: "lần",
+    note: "Tã ướt",
+    createdAt: now,
   },
 ];
 
-export const useTrackingStore = create<TrackingState>((set, get) => ({
-  entries: demoEntries,
+export const useTrackingStore = create<TrackingState>()(
+  persist(
+    (set, get) => ({
+      entries: demoEntries,
 
-  addEntry: (entry) =>
-    set((state) => ({
-      entries: [
-        {
-          ...entry,
-          id: crypto.randomUUID(),
-          createdAt: new Date().toISOString(),
-        },
-        ...state.entries,
-      ],
-    })),
+      addEntry: (entry) =>
+        set((state) => ({
+          entries: [
+            {
+              ...entry,
+              id: crypto.randomUUID(),
+              createdAt: new Date().toISOString(),
+            },
+            ...state.entries,
+          ],
+        })),
 
-  getTodayEntries: (babyId) => {
-    return get().entries.filter((entry) => {
-      const sameBaby = babyId ? entry.babyId === babyId : true;
-      return sameBaby && isToday(entry.createdAt);
-    });
-  },
-}));
+      deleteEntry: (entryId) =>
+        set((state) => ({
+          entries: state.entries.filter((entry) => entry.id !== entryId),
+        })),
+
+      clearDemoEntries: () =>
+        set((state) => ({
+          entries: state.entries.filter(
+            (entry) => !entry.id.startsWith("demo-"),
+          ),
+        })),
+
+      getTodayEntries: (babyId) => {
+        return get()
+          .entries.filter((entry) => {
+            const sameBaby = babyId ? entry.babyId === babyId : true;
+            return sameBaby && isToday(entry.createdAt);
+          })
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          );
+      },
+
+      getTodaySummary: (babyId) => {
+        const todayEntries = get().getTodayEntries(babyId);
+
+        return todayEntries.reduce<TrackingTodaySummary>(
+          (summary, entry) => {
+            const value = Number(entry.value || 0);
+
+            if (entry.type === "milk") summary.milkMl += value;
+            if (entry.type === "sleep") summary.sleepHours += value;
+            if (entry.type === "meal") summary.meals += value;
+            if (entry.type === "diaper") summary.diapers += value;
+            if (entry.type === "mood") summary.moodCount += value;
+            if (entry.type === "medicine") summary.medicineCount += value;
+            if (entry.type === "temperature") summary.temperatureLatest = value;
+
+            return summary;
+          },
+          {
+            milkMl: 0,
+            sleepHours: 0,
+            meals: 0,
+            diapers: 0,
+            moodCount: 0,
+            medicineCount: 0,
+            temperatureLatest: undefined,
+          },
+        );
+      },
+    }),
+    {
+      name: "mind-ai-tracking-store-v1",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ entries: state.entries }),
+    },
+  ),
+);
 
 export function getTrackingLabel(type: TrackingType) {
   const labels: Record<TrackingType, string> = {
@@ -104,7 +158,22 @@ export function getTrackingLabel(type: TrackingType) {
     diaper: "Tã",
     temperature: "Nhiệt độ",
     medicine: "Thuốc",
+    mood: "Tâm trạng",
   };
 
   return labels[type];
+}
+
+export function getTrackingIcon(type: TrackingType) {
+  const icons: Record<TrackingType, string> = {
+    milk: "🍼",
+    sleep: "😴",
+    meal: "🥣",
+    diaper: "🧷",
+    temperature: "🌡️",
+    medicine: "💊",
+    mood: "😊",
+  };
+
+  return icons[type];
 }

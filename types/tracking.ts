@@ -6,7 +6,8 @@ export type TrackingType =
   | "meal"
   | "diaper"
   | "temperature"
-  | "medicine";
+  | "medicine"
+  | "mood";
 
 export interface TrackingEntry {
   id: string;
@@ -16,4 +17,14 @@ export interface TrackingEntry {
   unit: string;
   note?: string;
   createdAt: string;
+}
+
+export interface TrackingTodaySummary {
+  milkMl: number;
+  sleepHours: number;
+  meals: number;
+  diapers: number;
+  moodCount: number;
+  medicineCount: number;
+  temperatureLatest?: number;
 }

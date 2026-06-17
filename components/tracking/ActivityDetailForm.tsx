@@ -1,8 +1,13 @@
 "use client";
 
-import { babies } from "@/src/store/babyStore";
+import { useState } from "react";
 import type { BabyId } from "@/types/baby";
 import type { TrackingEntry, TrackingType } from "@/types/tracking";
+
+const babyMeta: Record<BabyId, { name: string; emoji: string }> = {
+  mochi: { name: "Mochi", emoji: "🎀" },
+  matcha: { name: "Matcha", emoji: "🌸" },
+};
 
 const config: Record<
   TrackingType,
@@ -12,6 +17,8 @@ const config: Record<
     unit: string;
     defaultValue: number;
     valueLabel: string;
+    presets: number[];
+    notePlaceholder: string;
   }
 > = {
   milk: {
@@ -19,14 +26,18 @@ const config: Record<
     icon: "🍼",
     unit: "ml",
     defaultValue: 120,
-    valueLabel: "Lượng (ml)",
+    valueLabel: "Lượng sữa",
+    presets: [30, 60, 90, 120, 150, 180],
+    notePlaceholder: "Ví dụ: Bé bú tốt, bú bình, sữa công thức...",
   },
   sleep: {
     title: "Ngủ",
-    icon: "🌙",
+    icon: "😴",
     unit: "giờ",
     defaultValue: 1.5,
-    valueLabel: "Thời lượng (giờ)",
+    valueLabel: "Thời lượng ngủ",
+    presets: [0.5, 1, 1.5, 2, 3],
+    notePlaceholder: "Ví dụ: Ngủ trưa, ngủ sâu, dễ thức giấc...",
   },
   meal: {
     title: "Ăn dặm",
@@ -34,6 +45,8 @@ const config: Record<
     unit: "bữa",
     defaultValue: 1,
     valueLabel: "Số bữa",
+    presets: [1, 2, 3],
+    notePlaceholder: "Ví dụ: Cháo bí đỏ, ăn tốt, ăn ít...",
   },
   diaper: {
     title: "Tã",
@@ -41,6 +54,8 @@ const config: Record<
     unit: "lần",
     defaultValue: 1,
     valueLabel: "Số lần",
+    presets: [1, 2, 3, 4],
+    notePlaceholder: "Ví dụ: Tã ướt, tã bẩn, phân mềm...",
   },
   temperature: {
     title: "Nhiệt độ",
@@ -48,6 +63,8 @@ const config: Record<
     unit: "°C",
     defaultValue: 37.2,
     valueLabel: "Nhiệt độ",
+    presets: [36.8, 37.2, 37.5, 38, 38.5],
+    notePlaceholder: "Ví dụ: Đo nách, bé hơi nóng, theo dõi thêm...",
   },
   medicine: {
     title: "Thuốc",
@@ -55,6 +72,17 @@ const config: Record<
     unit: "lần",
     defaultValue: 1,
     valueLabel: "Số lần",
+    presets: [1, 2, 3],
+    notePlaceholder: "Ví dụ: Vitamin D, thuốc theo chỉ định...",
+  },
+  mood: {
+    title: "Tâm trạng",
+    icon: "😊",
+    unit: "lần",
+    defaultValue: 1,
+    valueLabel: "Ghi nhận",
+    presets: [1],
+    notePlaceholder: "Ví dụ: Vui vẻ, quấy khóc, buồn ngủ, khó chịu...",
   },
 };
 
@@ -72,7 +100,8 @@ export default function ActivityDetailForm({
   onSave,
 }: ActivityDetailFormProps) {
   const item = config[type];
-  const baby = babies.find((babyItem) => babyItem.id === babyId) ?? babies[0];
+  const baby = babyMeta[babyId];
+  const [value, setValue] = useState(item.defaultValue);
 
   return (
     <div className="fixed inset-0 z-[80] bg-white">
@@ -82,6 +111,7 @@ export default function ActivityDetailForm({
             type="button"
             onClick={onBack}
             className="flex size-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-100"
+            aria-label="Quay lại"
           >
             ←
           </button>
@@ -97,7 +127,7 @@ export default function ActivityDetailForm({
             {item.title}
           </h3>
           <p className="mt-1 text-sm text-slate-500">
-            {new Date().toLocaleDateString("vi-VN")} ·{" "}
+            {baby.emoji} {baby.name} ·{" "}
             {new Date().toLocaleTimeString("vi-VN", {
               hour: "2-digit",
               minute: "2-digit",
@@ -109,14 +139,11 @@ export default function ActivityDetailForm({
           className="mt-8 space-y-4"
           onSubmit={(event) => {
             event.preventDefault();
+
             const form = event.currentTarget;
-            const valueInput = form.elements.namedItem(
-              "value",
-            ) as HTMLInputElement;
             const noteInput = form.elements.namedItem(
               "note",
             ) as HTMLTextAreaElement;
-            const value = Number(valueInput.value || item.defaultValue);
 
             onSave({
               babyId,
@@ -131,7 +158,7 @@ export default function ActivityDetailForm({
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <span className="text-sm font-bold text-slate-500">Bé</span>
               <span className="font-black text-slate-950">
-                {baby.avatarEmoji} {baby.name}
+                {baby.emoji} {baby.name}
               </span>
             </div>
 
@@ -139,12 +166,36 @@ export default function ActivityDetailForm({
               <span className="text-sm font-bold text-slate-500">
                 {item.valueLabel}
               </span>
-              <div className="mt-2 flex items-center rounded-2xl bg-slate-50 px-4 py-3">
+
+              {item.presets.length > 1 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.presets.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setValue(preset)}
+                      className={`rounded-full px-4 py-2 text-sm font-black transition ${
+                        value === preset
+                          ? "bg-pink-500 text-white shadow-sm"
+                          : "bg-slate-50 text-slate-500"
+                      }`}
+                    >
+                      {preset}
+                      {item.unit}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="mt-3 flex items-center rounded-2xl bg-slate-50 px-4 py-3">
                 <input
                   name="value"
                   type="number"
                   step="0.1"
-                  defaultValue={item.defaultValue}
+                  value={value}
+                  onChange={(event) =>
+                    setValue(Number(event.currentTarget.value))
+                  }
                   className="min-w-0 flex-1 bg-transparent text-base font-bold text-slate-950 outline-none"
                 />
                 <span className="text-sm font-bold text-slate-400">
@@ -158,7 +209,7 @@ export default function ActivityDetailForm({
               <textarea
                 name="note"
                 rows={4}
-                placeholder="Ví dụ: Bé uống hết bình, ngủ ngon..."
+                placeholder={item.notePlaceholder}
                 className="mt-2 w-full resize-none rounded-2xl bg-slate-50 px-4 py-3 text-sm outline-none placeholder:text-slate-400"
               />
             </label>
@@ -166,9 +217,9 @@ export default function ActivityDetailForm({
 
           <button
             type="submit"
-            className="w-full rounded-2xl bg-pink-500 py-4 font-black text-white shadow-sm"
+            className="w-full rounded-2xl bg-pink-500 py-4 font-black text-white shadow-sm active:scale-[0.99]"
           >
-            Lưu
+            Lưu ghi nhận
           </button>
 
           <button

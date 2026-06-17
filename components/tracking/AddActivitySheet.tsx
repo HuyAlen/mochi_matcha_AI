@@ -1,8 +1,12 @@
 "use client";
 
-import { babies } from "@/src/store/babyStore";
 import type { BabyId } from "@/types/baby";
 import type { TrackingType } from "@/types/tracking";
+
+const babyMeta: Record<BabyId, { name: string; emoji: string }> = {
+  mochi: { name: "Mochi", emoji: "🎀" },
+  matcha: { name: "Matcha", emoji: "🌸" },
+};
 
 const activityOptions: {
   type: TrackingType;
@@ -14,21 +18,32 @@ const activityOptions: {
     type: "milk",
     label: "Sữa",
     icon: "🍼",
-    description: "Lượng sữa, loại sữa, thời gian",
+    description: "Lượng sữa",
   },
   {
     type: "sleep",
     label: "Ngủ",
-    icon: "🌙",
-    description: "Thời lượng giấc ngủ",
+    icon: "😴",
+    description: "Thời lượng",
   },
   {
     type: "meal",
     label: "Ăn dặm",
     icon: "🥣",
-    description: "Bữa ăn, lượng ăn",
+    description: "Bữa ăn",
   },
-  { type: "diaper", label: "Tã", icon: "🧷", description: "Tã ướt, tã bẩn" },
+  {
+    type: "diaper",
+    label: "Tã",
+    icon: "🧷",
+    description: "Tã ướt/bẩn",
+  },
+  {
+    type: "mood",
+    label: "Tâm trạng",
+    icon: "😊",
+    description: "Vui, quấy, buồn ngủ",
+  },
   {
     type: "temperature",
     label: "Nhiệt độ",
@@ -39,7 +54,7 @@ const activityOptions: {
     type: "medicine",
     label: "Thuốc",
     icon: "💊",
-    description: "Liều dùng, ghi chú",
+    description: "Liều dùng",
   },
 ];
 
@@ -60,62 +75,70 @@ export default function AddActivitySheet({
 }: AddActivitySheetProps) {
   if (!open) return null;
 
+  const selectedBaby = babyMeta[selectedBabyId];
+
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/30 px-3 pb-3 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-[2rem] bg-white p-5 shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-black text-slate-950">Thêm ghi nhận</h3>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-pink-400">
+              Quick add
+            </p>
+            <h3 className="mt-1 text-xl font-black text-slate-950">
+              Ghi gì cho {selectedBaby.name}?
+            </h3>
+          </div>
+
           <button
             type="button"
             onClick={onClose}
-            className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+            aria-label="Đóng"
           >
             ✕
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          {babies.map((baby) => (
-            <button
-              key={baby.id}
-              type="button"
-              onClick={() => onBabyChange(baby.id)}
-              className={`rounded-3xl p-3 text-left ring-1 transition ${
-                selectedBabyId === baby.id
-                  ? "bg-pink-50 ring-pink-300"
-                  : "bg-lime-50 ring-lime-100"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex size-11 items-center justify-center rounded-full bg-white text-2xl">
-                  {baby.avatarEmoji}
-                </span>
-                <span className="font-black text-slate-900">{baby.name}</span>
-              </div>
-            </button>
-          ))}
+          {(Object.keys(babyMeta) as BabyId[]).map((babyId) => {
+            const baby = babyMeta[babyId];
+
+            return (
+              <button
+                key={babyId}
+                type="button"
+                onClick={() => onBabyChange(babyId)}
+                className={`rounded-3xl p-3 text-left ring-1 transition ${
+                  selectedBabyId === babyId
+                    ? "bg-pink-50 ring-pink-300"
+                    : "bg-slate-50 ring-slate-100"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex size-11 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
+                    {baby.emoji}
+                  </span>
+                  <span className="font-black text-slate-900">{baby.name}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="mt-5 space-y-3">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           {activityOptions.map((item) => (
             <button
               key={item.type}
               type="button"
               onClick={() => onSelectActivity(item.type)}
-              className="flex w-full items-center justify-between rounded-3xl bg-slate-50 p-4 text-left transition hover:bg-pink-50"
+              className="rounded-3xl bg-slate-50 p-4 text-left transition active:scale-[0.98]"
             >
-              <div className="flex items-center gap-3">
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
-                  {item.icon}
-                </span>
-                <div>
-                  <p className="font-black text-slate-950">{item.label}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-              <span className="text-slate-300">›</span>
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
+                {item.icon}
+              </span>
+              <p className="mt-3 font-black text-slate-950">{item.label}</p>
+              <p className="mt-1 text-xs text-slate-500">{item.description}</p>
             </button>
           ))}
         </div>
