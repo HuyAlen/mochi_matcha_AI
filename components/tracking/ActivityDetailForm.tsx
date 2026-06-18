@@ -89,6 +89,7 @@ const config: Record<
 interface ActivityDetailFormProps {
   type: TrackingType;
   babyId: BabyId;
+  initialEntry?: TrackingEntry | null;
   onBack: () => void;
   onSave: (entry: Omit<TrackingEntry, "id" | "createdAt">) => void;
 }
@@ -96,12 +97,13 @@ interface ActivityDetailFormProps {
 export default function ActivityDetailForm({
   type,
   babyId,
+  initialEntry,
   onBack,
   onSave,
 }: ActivityDetailFormProps) {
   const item = config[type];
   const baby = babyMeta[babyId];
-  const [value, setValue] = useState(item.defaultValue);
+  const [value, setValue] = useState(initialEntry?.value ?? item.defaultValue);
 
   return (
     <div className="fixed inset-0 z-[80] bg-white">
@@ -115,7 +117,9 @@ export default function ActivityDetailForm({
           >
             ←
           </button>
-          <h2 className="font-black text-slate-950">{item.title}</h2>
+          <h2 className="font-black text-slate-950">
+            {initialEntry ? "Sửa ghi nhận" : item.title}
+          </h2>
           <div className="size-10" />
         </div>
 
@@ -210,6 +214,7 @@ export default function ActivityDetailForm({
                 name="note"
                 rows={4}
                 placeholder={item.notePlaceholder}
+                defaultValue={initialEntry?.note ?? ""}
                 className="mt-2 w-full resize-none rounded-2xl bg-slate-50 px-4 py-3 text-sm outline-none placeholder:text-slate-400"
               />
             </label>
@@ -219,7 +224,7 @@ export default function ActivityDetailForm({
             type="submit"
             className="w-full rounded-2xl bg-pink-500 py-4 font-black text-white shadow-sm active:scale-[0.99]"
           >
-            Lưu ghi nhận
+            {initialEntry ? "Cập nhật ghi nhận" : "Lưu ghi nhận"}
           </button>
 
           <button

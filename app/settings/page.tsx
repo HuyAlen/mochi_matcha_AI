@@ -7,20 +7,10 @@ import SyncStatusCard from "@/components/settings/SyncStatusCard";
 export default function SettingsPage() {
   return (
     <AppShell>
-      <section className="space-y-5">
-        <div>
-          <h2 className="text-2xl font-black text-slate-950">Hồ sơ</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Quản lý tài khoản và thiết lập Mind AI.
-          </p>
-        </div>
-
+      <section className="space-y-3 pb-4">
         <ProfileCard />
-
         <SettingsMenu />
-
         <SyncStatusCard />
-
         <LogoutButton />
       </section>
     </AppShell>

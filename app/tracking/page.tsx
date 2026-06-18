@@ -1,37 +1,164 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import ActivityDetailForm from "@/components/tracking/ActivityDetailForm";
-import AddActivitySheet from "@/components/tracking/AddActivitySheet";
-import BabySelector from "@/components/tracking/BabySelector";
-import NotificationPermissionCard from "@/components/tracking/NotificationPermissionCard";
-import QuickActionGrid from "@/components/tracking/QuickActionGrid";
 import RecentTrackingList from "@/components/tracking/RecentTrackingList";
-import ReminderCard from "@/components/tracking/ReminderCard";
 import AppShell from "@/components/layout/AppShell";
 import { babies } from "@/src/store/babyStore";
-import { useTrackingStore } from "@/src/store/trackingStore";
+import {
+  getTrackingIcon,
+  getTrackingLabel,
+  summarizeTrackingEntries,
+  useTrackingStore,
+} from "@/src/store/trackingStore";
 import type { BabyId } from "@/types/baby";
-import type {
-  TrackingEntry,
-  TrackingTodaySummary,
-  TrackingType,
-} from "@/types/tracking";
+import type { TrackingEntry, TrackingType } from "@/types/tracking";
 
-function DailySummaryCard({
-  selectedBabyId,
-  summary,
+type BabyFilter = BabyId | "all";
+type DateFilter = "today" | "7d" | "30d" | "all";
+type TypeFilter = TrackingType | "all";
+
+type ToastState = {
+  message: string;
+  tone: "success" | "error";
+};
+
+const dateFilters: { label: string; value: DateFilter }[] = [
+  { label: "Hôm nay", value: "today" },
+  { label: "7 ngày", value: "7d" },
+  { label: "30 ngày", value: "30d" },
+  { label: "Tất cả", value: "all" },
+];
+
+const typeFilters: { label: string; value: TypeFilter; icon?: string }[] = [
+  { label: "Tất cả", value: "all" },
+  { label: "Sữa", value: "milk", icon: "🍼" },
+  { label: "Ngủ", value: "sleep", icon: "😴" },
+  { label: "Ăn", value: "meal", icon: "🥣" },
+  { label: "Tã", value: "diaper", icon: "🧷" },
+  { label: "Thuốc", value: "medicine", icon: "💊" },
+  { label: "Sốt", value: "temperature", icon: "🌡️" },
+  { label: "Mood", value: "mood", icon: "😊" },
+];
+
+function isInDateRange(date: string, filter: DateFilter) {
+  if (filter === "all") return true;
+
+  const input = new Date(date);
+  const now = new Date();
+  const start = new Date(now);
+
+  if (filter === "today") {
+    return (
+      input.getDate() === now.getDate() &&
+      input.getMonth() === now.getMonth() &&
+      input.getFullYear() === now.getFullYear()
+    );
+  }
+
+  start.setDate(now.getDate() - (filter === "7d" ? 6 : 29));
+  start.setHours(0, 0, 0, 0);
+
+  return input.getTime() >= start.getTime();
+}
+
+function todayLabel() {
+  return new Date().toLocaleDateString("vi-VN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+  });
+}
+
+function getTypeToastLabel(type: TrackingType) {
+  const labels: Record<TrackingType, string> = {
+    milk: "cữ sữa",
+    sleep: "giấc ngủ",
+    meal: "bữa ăn",
+    diaper: "lần thay tã",
+    temperature: "nhiệt độ",
+    medicine: "lần uống thuốc",
+    mood: "tâm trạng",
+  };
+
+  return labels[type] ?? "ghi nhận";
+}
+
+function Toast({ toast }: { toast: ToastState | null }) {
+  if (!toast) return null;
+
+  return (
+    <div className="fixed inset-x-4 top-4 z-[100] mx-auto max-w-md rounded-3xl bg-white px-4 py-3 shadow-xl ring-1 ring-pink-100">
+      <p
+        className={`text-sm font-black ${
+          toast.tone === "success" ? "text-pink-600" : "text-rose-600"
+        }`}
+      >
+        {toast.message}
+      </p>
+    </div>
+  );
+}
+
+function FilterPill({
+  active,
+  children,
+  onClick,
 }: {
-  selectedBabyId: BabyId;
-  summary: TrackingTodaySummary;
+  active: boolean;
+  children: ReactNode;
+  onClick: () => void;
 }) {
-  const baby = babies.find((item) => item.id === selectedBabyId) ?? babies[0];
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 rounded-2xl px-3 py-2.5 text-xs font-black transition active:scale-[0.98] ${
+        active
+          ? "bg-pink-500 text-white shadow-sm shadow-pink-100"
+          : "bg-slate-50 text-slate-500"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 
+function CompactSelect({
+  label,
+  value,
+  children,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  children: ReactNode;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block rounded-3xl bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
+      <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
+function SmartSummary({ entries }: { entries: TrackingEntry[] }) {
+  const summary = summarizeTrackingEntries(entries);
   const items = [
-    { label: "Sữa", value: `${summary.milkMl} ml`, icon: "🍼" },
+    { label: "Sữa", value: `${summary.milkMl}ml`, icon: "🍼" },
     {
       label: "Ngủ",
-      value: `${Number(summary.sleepHours.toFixed(1))} giờ`,
+      value: `${Number(summary.sleepHours.toFixed(1))}h`,
       icon: "😴",
     },
     { label: "Ăn", value: `${summary.meals} bữa`, icon: "🥣" },
@@ -39,130 +166,256 @@ function DailySummaryCard({
   ];
 
   return (
-    <div className="rounded-[2rem] bg-gradient-to-br from-pink-50 via-white to-purple-50 p-5 shadow-sm ring-1 ring-pink-100">
-      <div className="flex items-start justify-between gap-4">
+    <section className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-100">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-pink-400">
-            Tổng quan hôm nay
+            Smart summary
           </p>
-          <h3 className="mt-2 text-xl font-black text-slate-950">
-            {baby.avatarEmoji} {baby.name}
-          </h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Dữ liệu được lưu trên thiết bị bằng localStorage.
-          </p>
+          <h2 className="mt-1 text-xl font-black text-slate-950">
+            Tổng quan theo bộ lọc
+          </h2>
         </div>
-
-        {summary.temperatureLatest ? (
-          <div className="rounded-2xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-slate-100">
-            <p className="text-xs font-bold text-slate-400">Nhiệt độ</p>
-            <p className="font-black text-pink-600">
-              {summary.temperatureLatest}°C
-            </p>
-          </div>
-        ) : null}
+        <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-black text-purple-500">
+          {entries.length} ghi nhận
+        </span>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
+      <div className="mt-5 grid grid-cols-4 gap-2">
         {items.map((item) => (
           <div
             key={item.label}
-            className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-100"
+            className="rounded-3xl bg-slate-50 p-3 text-center"
           >
-            <span className="text-2xl">{item.icon}</span>
-            <p className="mt-3 text-xs font-bold text-slate-400">
+            <div className="text-2xl">{item.icon}</div>
+            <p className="mt-2 text-[11px] font-bold text-slate-400">
               {item.label}
             </p>
-            <p className="mt-1 text-lg font-black text-slate-950">
+            <p className="mt-1 text-sm font-black text-slate-950">
               {item.value}
             </p>
           </div>
         ))}
       </div>
-    </div>
+    </section>
+  );
+}
+
+function AIInsightMini({ entries }: { entries: TrackingEntry[] }) {
+  const summary = summarizeTrackingEntries(entries);
+  const hasData = entries.length > 0;
+
+  const insight = !hasData
+    ? "Chưa có dữ liệu theo bộ lọc hiện tại. Khi có thêm ghi nhận, Mind AI sẽ tóm tắt xu hướng chăm bé tại đây."
+    : summary.sleepHours < 2 && summary.milkMl > 0
+      ? "Bé đã có cữ sữa nhưng thời lượng ngủ trong bộ lọc còn thấp. Nên theo dõi thêm giấc ngủ kế tiếp."
+      : summary.meals >= 3
+        ? "Lịch ăn hôm nay khá đầy đủ. Có thể ghi chú món ăn để theo dõi phản ứng và sở thích của bé."
+        : "Dữ liệu đang ổn định. Tiếp tục ghi nhận đều sữa, ngủ, ăn và tã để Mind AI phân tích chính xác hơn.";
+
+  return (
+    <section className="rounded-[2rem] bg-gradient-to-br from-purple-50 via-white to-pink-50 p-5 shadow-sm ring-1 ring-purple-100">
+      <div className="flex items-start gap-3">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm ring-1 ring-purple-100">
+          🤖
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-slate-950">AI Insight mini</p>
+          <p className="mt-1 text-sm leading-6 text-slate-500">{insight}</p>
+        </div>
+      </div>
+    </section>
   );
 }
 
 export default function TrackingPage() {
+  const [babyFilter, setBabyFilter] = useState<BabyFilter>("all");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("today");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [selectedBabyId, setSelectedBabyId] = useState<BabyId>("mochi");
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<TrackingType | null>(null);
+  const [editingEntry, setEditingEntry] = useState<TrackingEntry | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   const entries = useTrackingStore((state) => state.entries);
   const addEntry = useTrackingStore((state) => state.addEntry);
-  const getTodaySummary = useTrackingStore((state) => state.getTodaySummary);
+  const updateEntry = useTrackingStore((state) => state.updateEntry);
+  const duplicateEntry = useTrackingStore((state) => state.duplicateEntry);
+  const deleteEntry = useTrackingStore((state) => state.deleteEntry);
 
-  const todaySummary = getTodaySummary(selectedBabyId);
-  const selectedEntries = entries.filter(
-    (entry) => entry.babyId === selectedBabyId,
-  );
+  const filteredEntries = useMemo(() => {
+    return entries.filter((entry) => {
+      const matchBaby =
+        babyFilter === "all" ? true : entry.babyId === babyFilter;
+      const matchType = typeFilter === "all" ? true : entry.type === typeFilter;
+      const matchDate = isInDateRange(entry.createdAt, dateFilter);
 
-  function saveEntry(entry: Omit<TrackingEntry, "id" | "createdAt">) {
+      return matchBaby && matchType && matchDate;
+    });
+  }, [babyFilter, dateFilter, entries, typeFilter]);
+
+  function showToast(nextToast: ToastState) {
+    setToast(nextToast);
+    window.setTimeout(() => setToast(null), 2200);
+  }
+
+  function handleSave(entry: Omit<TrackingEntry, "id" | "createdAt">) {
+    if (editingEntry) {
+      updateEntry(editingEntry.id, entry);
+      setEditingEntry(null);
+      setSelectedType(null);
+      showToast({ tone: "success", message: "✅ Đã cập nhật ghi nhận" });
+      return;
+    }
+
     addEntry(entry);
     setSelectedType(null);
-    setSheetOpen(false);
+    const baby = babies.find((item) => item.id === entry.babyId) ?? babies[0];
+    showToast({
+      tone: "success",
+      message: `✅ Đã ghi nhận ${getTypeToastLabel(entry.type)} cho ${baby.name}`,
+    });
+  }
+
+  function handleEdit(entry: TrackingEntry) {
+    setEditingEntry(entry);
+    setSelectedBabyId(entry.babyId);
+    setSelectedType(entry.type);
+  }
+
+  function handleDuplicate(entryId: string) {
+    duplicateEntry(entryId);
+    showToast({ tone: "success", message: "✅ Đã nhân bản ghi nhận" });
+  }
+
+  function handleDelete(entryId: string) {
+    const confirmed = window.confirm("Bạn muốn xóa ghi nhận này?");
+    if (!confirmed) return;
+
+    deleteEntry(entryId);
+    showToast({ tone: "success", message: "🗑 Đã xóa ghi nhận" });
   }
 
   return (
     <AppShell>
-      <section className="space-y-4 pb-4">
-        <div className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-100">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-pink-400">
-            Tracking UX Pro
-          </p>
-          <h2 className="mt-2 text-2xl font-black text-slate-950">
-            Ghi nhận nhanh
-          </h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
-            Chọn bé và lưu hoạt động chăm sóc hằng ngày chỉ trong vài giây.
-          </p>
+      <Toast toast={toast} />
+
+      <section className="space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+        <header className="rounded-[2rem] bg-gradient-to-br from-pink-50 via-white to-purple-50 p-5 shadow-sm ring-1 ring-pink-100">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-pink-400">
+                Tracking Pro
+              </p>
+              <h1 className="mt-2 text-2xl font-black text-slate-950">
+                Theo dõi chăm bé
+              </h1>
+              <p className="mt-1 text-sm font-bold text-slate-500">
+                Mochi & Matcha • {todayLabel()}
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <section className="sticky top-2 z-20 rounded-[2rem] bg-white/95 p-4 shadow-sm ring-1 ring-slate-100 backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-pink-400">
+              Bộ lọc
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setBabyFilter("all");
+                setDateFilter("today");
+                setTypeFilter("all");
+              }}
+              className="rounded-full bg-pink-50 px-3 py-1 text-xs font-black text-pink-500"
+            >
+              Đặt lại
+            </button>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2 rounded-[1.5rem] bg-slate-50 p-1.5">
+            <FilterPill
+              active={babyFilter === "all"}
+              onClick={() => setBabyFilter("all")}
+            >
+              Tất cả
+            </FilterPill>
+            {babies.map((baby) => (
+              <FilterPill
+                key={baby.id}
+                active={babyFilter === baby.id}
+                onClick={() => setBabyFilter(baby.id)}
+              >
+                {baby.avatarEmoji} {baby.name}
+              </FilterPill>
+            ))}
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <CompactSelect
+              label="Thời gian"
+              value={dateFilter}
+              onChange={(value) => setDateFilter(value as DateFilter)}
+            >
+              {dateFilters.map((filter) => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.label}
+                </option>
+              ))}
+            </CompactSelect>
+
+            <CompactSelect
+              label="Hoạt động"
+              value={typeFilter}
+              onChange={(value) => setTypeFilter(value as TypeFilter)}
+            >
+              {typeFilters.map((filter) => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.icon ? `${filter.icon} ` : ""}
+                  {filter.label}
+                </option>
+              ))}
+            </CompactSelect>
+          </div>
+        </section>
+
+        <SmartSummary entries={filteredEntries} />
+        <AIInsightMini entries={filteredEntries} />
+
+        <div className="flex items-center justify-between px-1 pt-1">
+          <div>
+            <h2 className="text-lg font-black text-slate-950">Timeline Pro</h2>
+            <p className="text-xs font-bold text-slate-400">
+              Nhóm theo ngày • Quản lý bằng menu tác vụ
+            </p>
+          </div>
+          {typeFilter !== "all" ? (
+            <span className="rounded-full bg-pink-50 px-3 py-1 text-xs font-black text-pink-500">
+              {getTrackingIcon(typeFilter)} {getTrackingLabel(typeFilter)}
+            </span>
+          ) : null}
         </div>
 
-        <BabySelector
-          selectedBabyId={selectedBabyId}
-          onChange={setSelectedBabyId}
-        />
-
-        <NotificationPermissionCard />
-
-        <DailySummaryCard
-          selectedBabyId={selectedBabyId}
-          summary={todaySummary}
-        />
-
-        <QuickActionGrid
-          selectedBabyId={selectedBabyId}
-          onAddEntry={addEntry}
-        />
-
         <RecentTrackingList
-          entries={selectedEntries}
-          selectedBabyId={selectedBabyId}
+          entries={filteredEntries}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
         />
-
-        <ReminderCard />
       </section>
-
-      <AddActivitySheet
-        open={sheetOpen}
-        selectedBabyId={selectedBabyId}
-        onBabyChange={setSelectedBabyId}
-        onClose={() => setSheetOpen(false)}
-        onSelectActivity={(type: TrackingType) => {
-          setSelectedType(type);
-          setSheetOpen(false);
-        }}
-      />
 
       {selectedType ? (
         <ActivityDetailForm
           type={selectedType}
           babyId={selectedBabyId}
+          initialEntry={editingEntry}
           onBack={() => {
             setSelectedType(null);
-            setSheetOpen(true);
+            setEditingEntry(null);
           }}
-          onSave={saveEntry}
+          onSave={handleSave}
         />
       ) : null}
     </AppShell>

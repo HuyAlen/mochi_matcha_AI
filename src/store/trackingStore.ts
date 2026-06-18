@@ -14,6 +14,11 @@ export type TrackingLog = TrackingEntry;
 interface TrackingState {
   entries: TrackingEntry[];
   addEntry: (entry: Omit<TrackingEntry, "id" | "createdAt">) => void;
+  updateEntry: (
+    entryId: string,
+    payload: Partial<Omit<TrackingEntry, "id">>,
+  ) => void;
+  duplicateEntry: (entryId: string) => void;
   deleteEntry: (entryId: string) => void;
   clearDemoEntries: () => void;
   getTodayEntries: (babyId?: BabyId) => TrackingEntry[];
@@ -29,6 +34,14 @@ function isToday(date: string) {
     input.getMonth() === now.getMonth() &&
     input.getFullYear() === now.getFullYear()
   );
+}
+
+function createEntryId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  return `tracking-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 const now = new Date().toISOString();
@@ -72,6 +85,33 @@ const demoEntries: TrackingEntry[] = [
   },
 ];
 
+function summarize(entries: TrackingEntry[]): TrackingTodaySummary {
+  return entries.reduce<TrackingTodaySummary>(
+    (summary, entry) => {
+      const value = Number(entry.value || 0);
+
+      if (entry.type === "milk") summary.milkMl += value;
+      if (entry.type === "sleep") summary.sleepHours += value;
+      if (entry.type === "meal") summary.meals += 1;
+      if (entry.type === "diaper") summary.diapers += value;
+      if (entry.type === "mood") summary.moodCount += 1;
+      if (entry.type === "medicine") summary.medicineCount += 1;
+      if (entry.type === "temperature") summary.temperatureLatest = value;
+
+      return summary;
+    },
+    {
+      milkMl: 0,
+      sleepHours: 0,
+      meals: 0,
+      diapers: 0,
+      moodCount: 0,
+      medicineCount: 0,
+      temperatureLatest: undefined,
+    },
+  );
+}
+
 export const useTrackingStore = create<TrackingState>()(
   persist(
     (set, get) => ({
@@ -82,12 +122,37 @@ export const useTrackingStore = create<TrackingState>()(
           entries: [
             {
               ...entry,
-              id: crypto.randomUUID(),
+              id: createEntryId(),
               createdAt: new Date().toISOString(),
             },
             ...state.entries,
           ],
         })),
+
+      updateEntry: (entryId, payload) =>
+        set((state) => ({
+          entries: state.entries.map((entry) =>
+            entry.id === entryId ? { ...entry, ...payload } : entry,
+          ),
+        })),
+
+      duplicateEntry: (entryId) =>
+        set((state) => {
+          const source = state.entries.find((entry) => entry.id === entryId);
+          if (!source) return state;
+
+          return {
+            entries: [
+              {
+                ...source,
+                id: createEntryId(),
+                createdAt: new Date().toISOString(),
+                note: source.note ? `${source.note} · Sao chép` : "Sao chép",
+              },
+              ...state.entries,
+            ],
+          };
+        }),
 
       deleteEntry: (entryId) =>
         set((state) => ({
@@ -113,34 +178,7 @@ export const useTrackingStore = create<TrackingState>()(
           );
       },
 
-      getTodaySummary: (babyId) => {
-        const todayEntries = get().getTodayEntries(babyId);
-
-        return todayEntries.reduce<TrackingTodaySummary>(
-          (summary, entry) => {
-            const value = Number(entry.value || 0);
-
-            if (entry.type === "milk") summary.milkMl += value;
-            if (entry.type === "sleep") summary.sleepHours += value;
-            if (entry.type === "meal") summary.meals += value;
-            if (entry.type === "diaper") summary.diapers += value;
-            if (entry.type === "mood") summary.moodCount += value;
-            if (entry.type === "medicine") summary.medicineCount += value;
-            if (entry.type === "temperature") summary.temperatureLatest = value;
-
-            return summary;
-          },
-          {
-            milkMl: 0,
-            sleepHours: 0,
-            meals: 0,
-            diapers: 0,
-            moodCount: 0,
-            medicineCount: 0,
-            temperatureLatest: undefined,
-          },
-        );
-      },
+      getTodaySummary: (babyId) => summarize(get().getTodayEntries(babyId)),
     }),
     {
       name: "mind-ai-tracking-store-v1",
@@ -176,4 +214,8 @@ export function getTrackingIcon(type: TrackingType) {
   };
 
   return icons[type];
+}
+
+export function summarizeTrackingEntries(entries: TrackingEntry[]) {
+  return summarize(entries);
 }

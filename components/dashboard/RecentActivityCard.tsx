@@ -1,52 +1,180 @@
-const activities = [
-  ["🥣", "Ăn", "Mochi · Ăn dặm", "1 bữa", "08:00", "bg-blue-50 text-blue-600"],
-  [
-    "🌙",
-    "Ngủ",
-    "Matcha · Ngủ",
-    "1.5 giờ",
-    "09:15",
-    "bg-purple-50 text-purple-600",
-  ],
-  ["🍼", "Sữa", "Mochi · Sữa", "120 ml", "10:30", "bg-pink-50 text-pink-600"],
-];
+"use client";
+
+import Link from "next/link";
+import { useTrackingStore } from "@/src/store/trackingStore";
+import type { TrackingEntry } from "@/types/tracking";
+
+const trackingDisplay: Record<
+  string,
+  {
+    icon: string;
+    label: string;
+    unit: string;
+    className: string;
+  }
+> = {
+  milk: {
+    icon: "🍼",
+    label: "Sữa",
+    unit: "ml",
+    className: "bg-pink-50 text-pink-600",
+  },
+  sleep: {
+    icon: "🌙",
+    label: "Ngủ",
+    unit: "giờ",
+    className: "bg-purple-50 text-purple-600",
+  },
+  meal: {
+    icon: "🥣",
+    label: "Ăn",
+    unit: "bữa",
+    className: "bg-amber-50 text-amber-600",
+  },
+  diaper: {
+    icon: "🧷",
+    label: "Tã",
+    unit: "lần",
+    className: "bg-sky-50 text-sky-600",
+  },
+  mood: {
+    icon: "😊",
+    label: "Mood",
+    unit: "",
+    className: "bg-emerald-50 text-emerald-600",
+  },
+};
+
+function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatTime(date: Date) {
+  return date.toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return "--:--";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--:--";
+
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  if (isSameDay(date, now)) {
+    return `Hôm nay • ${formatTime(date)}`;
+  }
+
+  if (isSameDay(date, yesterday)) {
+    return `Hôm qua • ${formatTime(date)}`;
+  }
+
+  return `${date.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+  })} • ${formatTime(date)}`;
+}
+
+function getBabyName(babyId?: string) {
+  return babyId === "matcha" ? "Matcha" : "Mochi";
+}
+
+function getEntryValue(entry: TrackingEntry, unit: string) {
+  const value = Number(entry.value ?? 0);
+  const displayValue = Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(1);
+  const displayUnit = entry.unit || unit;
+
+  return displayUnit ? `${displayValue} ${displayUnit}` : displayValue;
+}
 
 export default function RecentActivityCard() {
+  const entries = useTrackingStore(
+    (state: { entries: TrackingEntry[] }) => state.entries,
+  );
+
+  const recentEntries = [...entries]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .slice(0, 4);
+
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
+    <section className="rounded-[1.75rem] bg-white p-5 shadow-sm ring-1 ring-slate-100">
       <div className="flex items-center justify-between">
-        <h3 className="font-black text-slate-950">Nhật ký gần đây</h3>
-        <a href="/tracking" className="text-sm font-semibold text-pink-500">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            Timeline
+          </p>
+          <h3 className="mt-1 font-black text-slate-950">Nhật ký gần đây</h3>
+        </div>
+
+        <Link href="/tracking" className="text-xs font-black text-pink-500">
           Xem tất cả
-        </a>
+        </Link>
       </div>
 
       <div className="mt-4 space-y-3">
-        {activities.map(([icon, chip, title, value, time, chipClass]) => (
-          <div
-            key={`${title}-${time}`}
-            className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-2xl bg-white text-lg">
-                {icon}
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-black ${chipClass}`}
-                  >
-                    {chip}
+        {recentEntries.length > 0 ? (
+          recentEntries.map((entry) => {
+            const display =
+              trackingDisplay[String(entry.type)] ?? trackingDisplay.mood;
+
+            return (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-100"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white text-lg">
+                    {display.icon}
                   </span>
-                  <p className="text-sm font-bold text-slate-800">{title}</p>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-black ${display.className}`}
+                      >
+                        {display.label}
+                      </span>
+                      <p className="truncate text-sm font-bold text-slate-800">
+                        {getBabyName(String(entry.babyId))}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs font-semibold text-slate-400">
+                      {formatDateTime(entry.createdAt)}
+                    </p>
+                  </div>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">{time}</p>
+
+                <p className="shrink-0 text-sm font-bold text-slate-500">
+                  {getEntryValue(entry, display.unit)}
+                </p>
               </div>
-            </div>
-            <p className="text-sm font-bold text-slate-500">{value}</p>
+            );
+          })
+        ) : (
+          <div className="rounded-2xl bg-slate-50 p-4 text-center ring-1 ring-slate-100">
+            <p className="text-sm font-bold text-slate-500">
+              Chưa có nhật ký hôm nay.
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-400">
+              Ghi nhận sữa, ngủ hoặc ăn dặm để dashboard cá nhân hóa tốt hơn.
+            </p>
           </div>
-        ))}
+        )}
       </div>
-    </div>
+    </section>
   );
 }

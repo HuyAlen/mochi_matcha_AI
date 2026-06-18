@@ -1,42 +1,77 @@
 import { babies } from "@/src/store/babyStore";
 
-function getAgeMonths(birthDate: string) {
+function getAgeParts(birthDate?: string) {
+  if (!birthDate) {
+    return {
+      title: "Chưa cập nhật ngày sinh",
+      subtitle: "Vào hồ sơ bé để thêm ngày sinh.",
+    };
+  }
+
   const birth = new Date(birthDate);
   const now = new Date();
+
+  if (Number.isNaN(birth.getTime())) {
+    return {
+      title: "Chưa cập nhật ngày sinh",
+      subtitle: "Vào hồ sơ bé để thêm ngày sinh.",
+    };
+  }
 
   let months =
     (now.getFullYear() - birth.getFullYear()) * 12 +
     now.getMonth() -
     birth.getMonth();
 
-  if (now.getDate() < birth.getDate()) {
+  let days = now.getDate() - birth.getDate();
+
+  if (days < 0) {
     months -= 1;
+    const previousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += previousMonth.getDate();
   }
 
-  return Math.max(months, 0);
+  if (months < 12) {
+    return {
+      title: `${Math.max(months, 0)} tháng ${Math.max(days, 0)} ngày`,
+      subtitle: "Giai đoạn xây dựng thói quen ăn, ngủ và vận động.",
+    };
+  }
+
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+
+  return {
+    title:
+      remainingMonths > 0
+        ? `${years} tuổi ${remainingMonths} tháng`
+        : `${years} tuổi`,
+    subtitle: "Theo dõi cột mốc phát triển và lịch chăm sóc định kỳ.",
+  };
 }
 
 export default function AgeCounterCard() {
-  const birthDate = babies[0]?.birthDate ?? new Date().toISOString();
-  const months = getAgeMonths(birthDate);
+  const age = getAgeParts(babies[0]?.birthDate);
 
   return (
-    <div className="rounded-3xl bg-linear-to-br from-pink-100 via-purple-100 to-lime-100 p-4 shadow-sm ring-1 ring-pink-100">
-      <div className="flex items-center justify-between gap-4">
+    <section className="rounded-[1.75rem] bg-white p-5 shadow-sm ring-1 ring-slate-100">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-bold text-purple-700">Twin Age</p>
-          <h3 className="mt-1 text-xl font-black text-slate-950">
-            🎂 {months} tháng tuổi
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            Tuổi hiện tại
+          </p>
+          <h3 className="mt-1 text-xl font-black tracking-tight text-slate-950">
+            {age.title}
           </h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Ăn dặm • Bò trườn • Tập đứng
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            {age.subtitle}
           </p>
         </div>
 
-        <div className="flex size-14 shrink-0 items-center justify-center rounded-3xl bg-white/80 text-3xl shadow-sm">
-          👧🏻👧🏼
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-2xl ring-1 ring-slate-100">
+          🎂
         </div>
       </div>
-    </div>
+    </section>
   );
 }

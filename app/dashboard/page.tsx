@@ -1,22 +1,18 @@
-import AgeCounterCard from "@/components/dashboard/AgeCounterCard";
 import AIInsightCard from "@/components/dashboard/AIInsightCard";
 import DashboardGreeting from "@/components/dashboard/DashboardGreeting";
 import GrowthSnapshotCard from "@/components/dashboard/GrowthSnapshotCard";
-import MealsTodayCard from "@/components/dashboard/MealsTodayCard";
+import HealthSnapshotCard from "@/components/dashboard/HealthSnapshotCard";
 import QuickActionsCard from "@/components/dashboard/QuickActionsCard";
+import QuickAddSheet from "@/components/dashboard/quick-add/QuickAddSheet";
 import RecentActivityCard from "@/components/dashboard/RecentActivityCard";
-import SleepSummaryCard from "@/components/dashboard/SleepSummaryCard";
 import TwinOverviewCard from "@/components/dashboard/TwinOverviewCard";
-import VaccineReminderCard from "@/components/dashboard/VaccineReminderCard";
 import AppShell from "@/components/layout/AppShell";
 
 export default function DashboardPage() {
   return (
     <AppShell>
-      <section className="space-y-5">
+      <section className="space-y-4 pb-4">
         <DashboardGreeting />
-
-        <AgeCounterCard />
 
         <TwinOverviewCard />
 
@@ -26,14 +22,12 @@ export default function DashboardPage() {
 
         <GrowthSnapshotCard />
 
-        <MealsTodayCard />
-
-        <VaccineReminderCard />
-
-        <SleepSummaryCard />
+        <HealthSnapshotCard />
 
         <RecentActivityCard />
       </section>
+
+      <QuickAddSheet />
     </AppShell>
   );
 }

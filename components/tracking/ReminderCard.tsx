@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { showReminderSavedNotification } from "@/src/services/notifications/localNotifications";
 
 type RepeatMode = "once" | "daily" | "custom";
@@ -15,6 +15,8 @@ interface ReminderItem {
   enabled: boolean;
   icon: string;
 }
+
+const STORAGE_KEY = "mind-ai-reminders-v1";
 
 const weekDays = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
@@ -61,10 +63,86 @@ const defaultReminders: ReminderItem[] = [
   },
 ];
 
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
+function createReminderId() {
+  if (isBrowser() && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+
+  return `reminder-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function isReminderItem(value: unknown): value is ReminderItem {
+  if (!value || typeof value !== "object") return false;
+
+  const reminder = value as Partial<ReminderItem>;
+
+  return (
+    typeof reminder.id === "string" &&
+    typeof reminder.title === "string" &&
+    typeof reminder.hour === "string" &&
+    typeof reminder.minute === "string" &&
+    typeof reminder.enabled === "boolean" &&
+    typeof reminder.icon === "string" &&
+    ["once", "daily", "custom"].includes(reminder.repeatMode ?? "") &&
+    Array.isArray(reminder.repeatDays)
+  );
+}
+
+function loadStoredReminders(): ReminderItem[] {
+  if (!isBrowser()) return defaultReminders;
+
+  try {
+    const rawValue = window.localStorage.getItem(STORAGE_KEY);
+    if (!rawValue) return defaultReminders;
+
+    const parsedValue = JSON.parse(rawValue);
+
+    if (!Array.isArray(parsedValue)) return defaultReminders;
+
+    const validReminders = parsedValue.filter(isReminderItem);
+
+    return validReminders.length > 0 ? validReminders : defaultReminders;
+  } catch (error) {
+    console.error("Failed to load reminders:", error);
+    return defaultReminders;
+  }
+}
+
+function saveStoredReminders(reminders: ReminderItem[]) {
+  if (!isBrowser()) return;
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders));
+  } catch (error) {
+    console.error("Failed to save reminders:", error);
+  }
+}
+
 function clampNumber(value: string, min: number, max: number) {
   const cleanValue = value.replace(/\D/g, "").slice(0, 2);
   if (!cleanValue) return "";
+
   const numericValue = Math.min(Math.max(Number(cleanValue), min), max);
+
+  return String(numericValue).padStart(2, "0");
+}
+
+function normalizeTimeValue(
+  value: string,
+  fallback: string,
+  min: number,
+  max: number,
+) {
+  const cleanValue = value.replace(/\D/g, "").slice(0, 2);
+
+  if (!cleanValue) return fallback;
+
+  const numericValue = Math.min(Math.max(Number(cleanValue), min), max);
+
   return String(numericValue).padStart(2, "0");
 }
 
@@ -76,12 +154,39 @@ function getRepeatLabel(reminder: ReminderItem) {
   if (reminder.repeatMode === "once") return "Một lần";
   if (reminder.repeatMode === "daily") return "Mỗi ngày";
   if (reminder.repeatDays.length === 0) return "Chọn ngày";
+
   return reminder.repeatDays.join(", ");
+}
+
+function normalizeReminder(reminder: ReminderItem): ReminderItem {
+  const hour = normalizeTimeValue(reminder.hour, "08", 0, 23);
+  const minute = normalizeTimeValue(reminder.minute, "00", 0, 59);
+  const repeatDays =
+    reminder.repeatMode === "daily"
+      ? weekDays
+      : reminder.repeatMode === "once"
+        ? []
+        : reminder.repeatDays.filter((day) => weekDays.includes(day));
+
+  const repeatMode =
+    reminder.repeatMode === "custom" && repeatDays.length === weekDays.length
+      ? "daily"
+      : reminder.repeatMode;
+
+  return {
+    ...reminder,
+    title: reminder.title.trim(),
+    hour,
+    minute,
+    repeatMode,
+    repeatDays: repeatMode === "daily" ? weekDays : repeatDays,
+    enabled: true,
+  };
 }
 
 function createEmptyReminder(): ReminderItem {
   return {
-    id: crypto.randomUUID(),
+    id: createReminderId(),
     title: "",
     hour: "08",
     minute: "00",
@@ -93,16 +198,20 @@ function createEmptyReminder(): ReminderItem {
 }
 
 export default function ReminderCard() {
-  const [reminders, setReminders] = useState<ReminderItem[]>(defaultReminders);
+  const [reminders, setReminders] =
+    useState<ReminderItem[]>(loadStoredReminders);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingReminder, setEditingReminder] = useState<ReminderItem>(
-    createEmptyReminder(),
-  );
+  const [editingReminder, setEditingReminder] =
+    useState<ReminderItem>(createEmptyReminder);
 
   const activeCount = useMemo(
     () => reminders.filter((reminder) => reminder.enabled).length,
     [reminders],
   );
+
+  useEffect(() => {
+    saveStoredReminders(reminders);
+  }, [reminders]);
 
   function openCreateForm() {
     setEditingReminder(createEmptyReminder());
@@ -168,26 +277,9 @@ export default function ReminderCard() {
   }
 
   async function saveReminder() {
-    const normalizedTitle = editingReminder.title.trim();
+    if (!editingReminder.title.trim()) return;
 
-    if (!normalizedTitle) return;
-
-    const nextReminder: ReminderItem = {
-      ...editingReminder,
-      title: normalizedTitle,
-      hour: editingReminder.hour || "08",
-      minute: editingReminder.minute || "00",
-      repeatMode:
-        editingReminder.repeatMode === "custom" &&
-        editingReminder.repeatDays.length === weekDays.length
-          ? "daily"
-          : editingReminder.repeatMode,
-      repeatDays:
-        editingReminder.repeatMode === "daily"
-          ? weekDays
-          : editingReminder.repeatDays,
-      enabled: true,
-    };
+    const nextReminder = normalizeReminder(editingReminder);
 
     setReminders((current) => {
       const exists = current.some(
@@ -318,7 +410,7 @@ export default function ReminderCard() {
                 }
                 onBlur={() =>
                   updateEditingReminder({
-                    hour: (editingReminder.hour || "08").padStart(2, "0"),
+                    hour: normalizeTimeValue(editingReminder.hour, "08", 0, 23),
                   })
                 }
                 className="min-w-0 rounded-2xl bg-white px-4 py-4 text-center text-lg font-black text-slate-950 outline-none"
@@ -335,7 +427,12 @@ export default function ReminderCard() {
                 }
                 onBlur={() =>
                   updateEditingReminder({
-                    minute: (editingReminder.minute || "00").padStart(2, "0"),
+                    minute: normalizeTimeValue(
+                      editingReminder.minute,
+                      "00",
+                      0,
+                      59,
+                    ),
                   })
                 }
                 className="min-w-0 rounded-2xl bg-white px-4 py-4 text-center text-lg font-black text-slate-950 outline-none"

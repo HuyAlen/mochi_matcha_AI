@@ -13,10 +13,11 @@ export default function TwinOverviewCard() {
   );
 
   return (
-    <div className="space-y-3">
+    <section className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h3 className="font-black text-slate-950">Tổng quan hai bé</h3>
-        <p className="text-xs font-bold text-slate-400">Hôm nay</p>
+        <div>
+          <h3 className="mt-1 font-black text-slate-950">Tổng quan hôm nay</h3>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -28,6 +29,6 @@ export default function TwinOverviewCard() {
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 }

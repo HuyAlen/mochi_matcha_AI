@@ -1,63 +1,123 @@
 "use client";
 
+import { useMemo } from "react";
 import type { Baby } from "@/types/baby";
 import type { TrackingEntry } from "@/types/tracking";
+import { useTrackingStore } from "@/src/store/trackingStore";
 
 interface BabySummaryCardProps {
   baby: Baby;
-  entries: TrackingEntry[];
+  /**
+   * Backward compatible only.
+   * Sprint 10.8.2 reads directly from trackingStore so the card updates
+   * immediately after Quick Add save.
+   */
+  entries?: TrackingEntry[];
+}
+
+function isToday(date: string) {
+  const input = new Date(date);
+  const now = new Date();
+
+  return (
+    input.getDate() === now.getDate() &&
+    input.getMonth() === now.getMonth() &&
+    input.getFullYear() === now.getFullYear()
+  );
 }
 
 function getTotal(entries: TrackingEntry[], type: TrackingEntry["type"]) {
   return entries
     .filter((entry) => entry.type === type)
-    .reduce((sum, entry) => sum + entry.value, 0);
+    .reduce((sum, entry) => sum + Number(entry.value ?? 0), 0);
+}
+
+function getCount(entries: TrackingEntry[], type: TrackingEntry["type"]) {
+  return entries.filter((entry) => entry.type === type).length;
 }
 
 function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-export default function BabySummaryCard({
-  baby,
-  entries,
-}: BabySummaryCardProps) {
-  const milk = getTotal(entries, "milk");
-  const sleep = getTotal(entries, "sleep");
-  const meals = getTotal(entries, "meal");
+function getBabyTone(babyId: string) {
+  if (babyId === "matcha") {
+    return {
+      dotClass: "bg-purple-500",
+      textClass: "text-purple-600",
+      bgClass: "bg-purple-50",
+      ringClass: "ring-purple-100",
+    };
+  }
+
+  return {
+    dotClass: "bg-pink-500",
+    textClass: "text-pink-600",
+    bgClass: "bg-pink-50",
+    ringClass: "ring-pink-100",
+  };
+}
+
+export default function BabySummaryCard({ baby }: BabySummaryCardProps) {
+  const entries = useTrackingStore((state) => state.entries);
+
+  const todayEntries = useMemo(() => {
+    return entries.filter(
+      (entry) => entry.babyId === baby.id && isToday(entry.createdAt),
+    );
+  }, [baby.id, entries]);
+
+  const milk = getTotal(todayEntries, "milk");
+  const sleep = getTotal(todayEntries, "sleep");
+  const meals = getCount(todayEntries, "meal");
+  const tone = getBabyTone(String(baby.id));
 
   return (
-    <article className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-pink-100">
-      <div className="bg-linear-to-br from-pink-100 via-rose-50 to-lime-50 px-4 py-5 text-center">
-        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-white text-5xl shadow-sm">
+    <article
+      className={`rounded-[1.5rem] bg-white p-4 shadow-sm ring-1 ${tone.ringClass}`}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${tone.bgClass} text-2xl`}
+        >
           {baby.avatarEmoji}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`size-2 rounded-full ${tone.dotClass}`} />
+            <h3 className="truncate font-black text-slate-950">{baby.name}</h3>
+          </div>
+          <p className={`mt-0.5 text-xs font-bold ${tone.textClass}`}>
+            Hôm nay
+          </p>
         </div>
       </div>
 
-      <div className="p-3">
-        <div className="rounded-2xl bg-white/90 p-3 text-center shadow-sm ring-1 ring-slate-100">
-          <h3 className="font-bold text-pink-600">{baby.name}</h3>
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="rounded-2xl bg-slate-50 p-3 text-center">
+          <p className="text-sm font-black text-slate-950">
+            {formatNumber(milk)}
+          </p>
+          <p className="mt-1 text-[10px] font-semibold text-slate-400">
+            ml sữa
+          </p>
+        </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-sm font-black text-slate-900">
-                {formatNumber(milk)}
-              </p>
-              <p className="text-[10px] text-slate-400">ml sữa</p>
-            </div>
-            <div>
-              <p className="text-sm font-black text-slate-900">
-                {formatNumber(sleep)}
-              </p>
-              <p className="text-[10px] text-slate-400">giờ ngủ</p>
-            </div>
-            <div>
-              <p className="text-sm font-black text-slate-900">
-                {formatNumber(meals)}
-              </p>
-              <p className="text-[10px] text-slate-400">bữa ăn</p>
-            </div>
-          </div>
+        <div className="rounded-2xl bg-slate-50 p-3 text-center">
+          <p className="text-sm font-black text-slate-950">
+            {formatNumber(sleep)}
+          </p>
+          <p className="mt-1 text-[10px] font-semibold text-slate-400">
+            giờ ngủ
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-3 text-center">
+          <p className="text-sm font-black text-slate-950">{meals}</p>
+          <p className="mt-1 text-[10px] font-semibold text-slate-400">
+            bữa ăn
+          </p>
         </div>
       </div>
     </article>
