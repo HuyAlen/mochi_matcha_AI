@@ -1,6 +1,6 @@
 export type BabyId = "mochi" | "matcha";
 
-export type BabyGender = "female";
+export type BabyGender = "female" | "male" | "other";
 
 export interface Baby {
   id: BabyId;
@@ -9,6 +9,18 @@ export interface Baby {
   gender: BabyGender;
   birthDate: string;
   avatarEmoji: string;
-  birthWeightKg: number;
-  birthHeightCm: number;
+  avatarUrl: string;
+
+  allergies: string;
+  medicalNotes: string;
+
+  likes: string;
+  dislikes: string;
+  sleepHabits: string;
+  eatingHabits: string;
+  careNotes: string;
+
+  doctor: string;
+  hospital: string;
+  insurance: string;
 }
