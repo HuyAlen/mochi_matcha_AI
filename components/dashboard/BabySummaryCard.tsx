@@ -1,16 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
+
+import { useBabyStore } from "@/store/babyStore";
+import { useTrackingStore } from "@/src/store/trackingStore";
 import type { Baby } from "@/types/baby";
 import type { TrackingEntry } from "@/types/tracking";
-import { useTrackingStore } from "@/src/store/trackingStore";
 
 interface BabySummaryCardProps {
   baby: Baby;
   /**
    * Backward compatible only.
-   * Sprint 10.8.2 reads directly from trackingStore so the card updates
-   * immediately after Quick Add save.
+   * The card reads from trackingStore so dashboard summary updates immediately
+   * after Quick Add save.
    */
   entries?: TrackingEntry[];
 }
@@ -40,6 +42,10 @@ function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
+function getDisplayName(baby: Baby) {
+  return baby.nickname?.trim() || baby.name?.trim() || "Bé yêu";
+}
+
 function getBabyTone(babyId: string) {
   if (babyId === "matcha") {
     return {
@@ -59,18 +65,25 @@ function getBabyTone(babyId: string) {
 }
 
 export default function BabySummaryCard({ baby }: BabySummaryCardProps) {
+  const babyProfiles = useBabyStore((state) => state.babyProfiles);
   const entries = useTrackingStore((state) => state.entries);
+
+  const profileBaby = useMemo(() => {
+    return babyProfiles.find((item) => item.id === baby.id) ?? baby;
+  }, [baby, babyProfiles]);
 
   const todayEntries = useMemo(() => {
     return entries.filter(
-      (entry) => entry.babyId === baby.id && isToday(entry.createdAt),
+      (entry) => entry.babyId === profileBaby.id && isToday(entry.createdAt),
     );
-  }, [baby.id, entries]);
+  }, [entries, profileBaby.id]);
 
   const milk = getTotal(todayEntries, "milk");
   const sleep = getTotal(todayEntries, "sleep");
   const meals = getCount(todayEntries, "meal");
-  const tone = getBabyTone(String(baby.id));
+
+  const tone = getBabyTone(String(profileBaby.id));
+  const displayName = getDisplayName(profileBaby);
 
   return (
     <article
@@ -78,16 +91,28 @@ export default function BabySummaryCard({ baby }: BabySummaryCardProps) {
     >
       <div className="flex items-center gap-3">
         <div
-          className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${tone.bgClass} text-2xl`}
+          className={`flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${tone.bgClass} text-2xl`}
         >
-          {baby.avatarEmoji}
+          {profileBaby.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profileBaby.avatarUrl}
+              alt={displayName}
+              className="size-full object-cover"
+            />
+          ) : (
+            <span>{profileBaby.avatarEmoji || "👶"}</span>
+          )}
         </div>
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className={`size-2 rounded-full ${tone.dotClass}`} />
-            <h3 className="truncate font-black text-slate-950">{baby.name}</h3>
+            <h3 className="truncate font-black text-slate-950">
+              {displayName}
+            </h3>
           </div>
+
           <p className={`mt-0.5 text-xs font-bold ${tone.textClass}`}>
             Hôm nay
           </p>

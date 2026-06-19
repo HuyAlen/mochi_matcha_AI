@@ -48,28 +48,32 @@ function isBabyId(value: unknown): value is BabyId {
   return value === "mochi" || value === "matcha";
 }
 
+function cleanText(value: unknown, fallback = "") {
+  return typeof value === "string" ? value : fallback;
+}
+
 export function normalizeBabyProfile(profile: Partial<Baby> | undefined): Baby {
   const fallbackId = isBabyId(profile?.id) ? profile.id : "mochi";
   const fallback = babies.find((baby) => baby.id === fallbackId) ?? babies[0];
 
   return {
     id: fallback.id,
-    name: profile?.name ?? fallback.name,
-    nickname: profile?.nickname ?? fallback.nickname,
+    name: cleanText(profile?.name, fallback.name),
+    nickname: cleanText(profile?.nickname, fallback.nickname),
     gender: profile?.gender ?? fallback.gender,
-    birthDate: profile?.birthDate ?? fallback.birthDate,
-    avatarEmoji: profile?.avatarEmoji ?? fallback.avatarEmoji,
-    avatarUrl: profile?.avatarUrl ?? "",
-    allergies: profile?.allergies ?? "",
-    medicalNotes: profile?.medicalNotes ?? "",
-    likes: profile?.likes ?? "",
-    dislikes: profile?.dislikes ?? "",
-    sleepHabits: profile?.sleepHabits ?? "",
-    eatingHabits: profile?.eatingHabits ?? "",
-    careNotes: profile?.careNotes ?? "",
-    doctor: profile?.doctor ?? "",
-    hospital: profile?.hospital ?? fallback.hospital,
-    insurance: profile?.insurance ?? "",
+    birthDate: cleanText(profile?.birthDate, fallback.birthDate),
+    avatarEmoji: cleanText(profile?.avatarEmoji, fallback.avatarEmoji),
+    avatarUrl: cleanText(profile?.avatarUrl, ""),
+    allergies: cleanText(profile?.allergies),
+    medicalNotes: cleanText(profile?.medicalNotes),
+    likes: cleanText(profile?.likes),
+    dislikes: cleanText(profile?.dislikes),
+    sleepHabits: cleanText(profile?.sleepHabits),
+    eatingHabits: cleanText(profile?.eatingHabits),
+    careNotes: cleanText(profile?.careNotes),
+    doctor: cleanText(profile?.doctor),
+    hospital: cleanText(profile?.hospital, fallback.hospital),
+    insurance: cleanText(profile?.insurance),
   };
 }
 
@@ -89,6 +93,8 @@ export function normalizeBabyProfiles(
 type BabyStore = {
   babyProfiles: Baby[];
   selectedBabyId: BabyId;
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
   setSelectedBabyId: (id: BabyId) => void;
   updateBabyProfile: (id: BabyId, data: Partial<Baby>) => void;
   resetBabyProfiles: () => void;
@@ -99,6 +105,9 @@ export const useBabyStore = create<BabyStore>()(
     (set) => ({
       babyProfiles: babies,
       selectedBabyId: "mochi",
+      hasHydrated: false,
+
+      setHasHydrated: (value) => set({ hasHydrated: value }),
 
       setSelectedBabyId: (id) => set({ selectedBabyId: id }),
 
@@ -106,7 +115,7 @@ export const useBabyStore = create<BabyStore>()(
         set((state) => ({
           babyProfiles: normalizeBabyProfiles(
             state.babyProfiles.map((baby) =>
-              baby.id === id ? { ...baby, ...data } : baby,
+              baby.id === id ? { ...baby, ...data, id } : baby,
             ),
           ),
         })),
@@ -119,13 +128,10 @@ export const useBabyStore = create<BabyStore>()(
     }),
     {
       name: "mind-ai-baby-profiles",
-      version: 11,
+      version: 12,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        babyProfiles: state.babyProfiles.map((baby) => ({
-          ...baby,
-          avatarUrl: "",
-        })),
+        babyProfiles: state.babyProfiles,
         selectedBabyId: state.selectedBabyId,
       }),
       migrate: (persistedState) => {
@@ -136,6 +142,7 @@ export const useBabyStore = create<BabyStore>()(
           selectedBabyId: isBabyId(state?.selectedBabyId)
             ? state.selectedBabyId
             : "mochi",
+          hasHydrated: false,
         };
       },
       merge: (persistedState, currentState) => {
@@ -148,7 +155,11 @@ export const useBabyStore = create<BabyStore>()(
           selectedBabyId: isBabyId(state?.selectedBabyId)
             ? state.selectedBabyId
             : currentState.selectedBabyId,
+          hasHydrated: false,
         };
+      },
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
       },
     },
   ),
