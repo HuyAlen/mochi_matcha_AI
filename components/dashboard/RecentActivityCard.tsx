@@ -153,7 +153,9 @@ export default function RecentActivityCard() {
                       </p>
                     </div>
                     <p className="mt-1 text-xs font-semibold text-slate-400">
-                      {formatDateTime(entry.createdAt)}
+                      <span suppressHydrationWarning>
+                        {formatDateTime(entry.createdAt)}
+                      </span>
                     </p>
                   </div>
                 </div>

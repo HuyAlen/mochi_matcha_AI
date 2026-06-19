@@ -1,29 +1,82 @@
+"use client";
+
+import { useMemo, useRef } from "react";
+
 import AppShell from "@/components/layout/AppShell";
-import MemoryTimeline from "@/components/timeline/MemoryTimeline";
+import MemoryComposer from "@/components/memory/MemoryComposer";
+import MemoryFilters from "@/components/memory/MemoryFilters";
+import MemoryHero from "@/components/memory/MemoryHero";
+import MemoryTimeline from "@/components/memory/MemoryTimeline";
+import { useMemoryStore } from "@/store/memoryStore";
 
 export default function TimelinePage() {
+  const composerRef = useRef<HTMLDivElement | null>(null);
+
+  const memories = useMemoryStore((state) => state.memories);
+  const selectedBabyFilter = useMemoryStore(
+    (state) => state.selectedBabyFilter,
+  );
+  const selectedTypeFilter = useMemoryStore(
+    (state) => state.selectedTypeFilter,
+  );
+  const setBabyFilter = useMemoryStore((state) => state.setBabyFilter);
+  const setTypeFilter = useMemoryStore((state) => state.setTypeFilter);
+  const addMemory = useMemoryStore((state) => state.addMemory);
+  const toggleFavorite = useMemoryStore((state) => state.toggleFavorite);
+  const deleteMemory = useMemoryStore((state) => state.deleteMemory);
+
+  const filteredMemories = useMemo(() => {
+    return memories
+      .filter((memory) => {
+        if (selectedBabyFilter === "all") return true;
+        if (selectedBabyFilter === "both") return memory.babyId === "both";
+
+        return memory.babyId === selectedBabyFilter || memory.babyId === "both";
+      })
+      .filter((memory) => {
+        if (selectedTypeFilter === "all") return true;
+
+        return memory.type === selectedTypeFilter;
+      })
+      .sort((a, b) => {
+        const favoriteScore = Number(b.isFavorite) - Number(a.isFavorite);
+
+        if (favoriteScore !== 0) return favoriteScore;
+
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+  }, [memories, selectedBabyFilter, selectedTypeFilter]);
+
+  function scrollToComposer() {
+    composerRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
+
   return (
     <AppShell>
-      <section className="space-y-5">
-        <div>
-          <h2 className="text-2xl font-black text-slate-950">Kỷ niệm</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Lưu lại khoảnh khắc đáng nhớ của Mochi & Matcha.
-          </p>
+      <main className="mx-auto w-full max-w-3xl space-y-5 pb-16">
+        <MemoryHero memories={memories} />
+
+        <div ref={composerRef}>
+          <MemoryComposer onAdd={addMemory} />
         </div>
 
-        <div className="rounded-3xl bg-linear-to-br from-pink-100 to-purple-100 p-5 shadow-sm ring-1 ring-pink-100">
-          <p className="text-sm font-bold text-purple-700">Memory Book</p>
-          <h3 className="mt-2 text-lg font-black text-slate-950">
-            Những cột mốc đầu đời của hai bé
-          </h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Sau này AI có thể tự tạo album năm đầu đời từ tracking và hình ảnh.
-          </p>
-        </div>
+        <MemoryFilters
+          babyFilter={selectedBabyFilter}
+          typeFilter={selectedTypeFilter}
+          onBabyChange={setBabyFilter}
+          onTypeChange={setTypeFilter}
+        />
 
-        <MemoryTimeline />
-      </section>
+        <MemoryTimeline
+          memories={filteredMemories}
+          onCreate={scrollToComposer}
+          onToggleFavorite={toggleFavorite}
+          onDelete={deleteMemory}
+        />
+      </main>
     </AppShell>
   );
 }
