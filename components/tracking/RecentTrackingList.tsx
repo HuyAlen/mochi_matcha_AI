@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { babies } from "@/src/store/babyStore";
+import { useBabyStore } from "@/src/store/babyStore";
 import { getTrackingIcon, getTrackingLabel } from "@/src/store/trackingStore";
-import type { BabyId } from "@/types/baby";
+import type { Baby, BabyId } from "@/types/baby";
 import type { TrackingEntry } from "@/types/tracking";
 
 interface RecentTrackingListProps {
@@ -12,17 +12,6 @@ interface RecentTrackingListProps {
   onDelete: (entryId: string) => void;
   onDuplicate: (entryId: string) => void;
 }
-
-type BabyProfileLite = {
-  id: string;
-  name?: string;
-  nickname?: string;
-  realName?: string;
-  avatarEmoji?: string;
-  avatarUrl?: string;
-  avatar?: string;
-  photoUrl?: string;
-};
 
 const TYPE_TONE: Record<
   string,
@@ -124,6 +113,7 @@ function formatTime(date: string) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    timeZone: "Asia/Ho_Chi_Minh",
   }).format(parsedDate);
 }
 
@@ -146,6 +136,7 @@ function formatDay(date: string) {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "Asia/Ho_Chi_Minh",
   });
 }
 
@@ -156,6 +147,7 @@ function formatShortDay(date: string) {
     weekday: "short",
     day: "2-digit",
     month: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh",
   });
 }
 
@@ -221,18 +213,21 @@ function formatValue(entry: TrackingEntry) {
   return `${value} ${unit}`.trim();
 }
 
-function getBabyProfile(babyId: BabyId | string) {
-  return (babies as BabyProfileLite[]).find((item) => item.id === babyId);
+function getBabyProfile(
+  babyProfiles: Baby[],
+  babyId: BabyId | string,
+): Baby | undefined {
+  return babyProfiles.find((item) => item.id === babyId);
 }
 
-function getBabyDisplayName(babyId: BabyId | string) {
-  const baby = getBabyProfile(babyId);
+function getBabyDisplayName(babyProfiles: Baby[], babyId: BabyId | string) {
+  const baby = getBabyProfile(babyProfiles, babyId);
 
   return baby?.nickname?.trim() || baby?.name?.trim() || "Bé";
 }
 
-function getBabyInitial(babyId: BabyId | string) {
-  const name = getBabyDisplayName(babyId);
+function getBabyInitial(babyProfiles: Baby[], babyId: BabyId | string) {
+  const name = getBabyDisplayName(babyProfiles, babyId);
 
   if (name.toLowerCase().startsWith("matcha")) return "Ma";
   if (name.toLowerCase().startsWith("mochi")) return "Mo";
@@ -240,19 +235,19 @@ function getBabyInitial(babyId: BabyId | string) {
   return name.slice(0, 2);
 }
 
-function getBabyAvatarSrc(babyId: BabyId | string) {
-  const baby = getBabyProfile(babyId);
+function getBabyAvatarSrc(babyProfiles: Baby[], babyId: BabyId | string) {
+  const baby = getBabyProfile(babyProfiles, babyId);
 
-  return baby?.avatarUrl || baby?.photoUrl || baby?.avatar || "";
+  return baby?.avatarUrl || "";
 }
 
-function getBabyAvatarEmoji(babyId: BabyId | string) {
-  const baby = getBabyProfile(babyId);
+function getBabyAvatarEmoji(babyProfiles: Baby[], babyId: BabyId | string) {
+  const baby = getBabyProfile(babyProfiles, babyId);
 
   return baby?.avatarEmoji || "👶";
 }
 
-function getDailyInsight(entries: TrackingEntry[]) {
+function getDailyInsight(entries: TrackingEntry[], babyProfiles: Baby[]) {
   const milkTotal = entries
     .filter((entry) => entry.type === "milk")
     .reduce((sum, entry) => sum + Number(entry.value ?? 0), 0);
@@ -271,7 +266,7 @@ function getDailyInsight(entries: TrackingEntry[]) {
 
   if (entries.length === 1) {
     const onlyEntry = entries[0];
-    const babyName = getBabyDisplayName(onlyEntry.babyId);
+    const babyName = getBabyDisplayName(babyProfiles, onlyEntry.babyId);
 
     if (onlyEntry.type === "milk") {
       return `${babyName} đã uống ${Number(onlyEntry.value ?? 0)}ml. Giấc ngủ và bữa ăn chưa được ghi nhận trong bộ lọc này.`;
@@ -307,6 +302,7 @@ export default function RecentTrackingList({
   const [selectedEntry, setSelectedEntry] = useState<TrackingEntry | null>(
     null,
   );
+  const babyProfiles = useBabyStore((state) => state.babyProfiles);
 
   const groupedEntries = useMemo(() => {
     const sorted = [...entries].sort(
@@ -395,9 +391,18 @@ export default function RecentTrackingList({
 
                 {dayEntries.map((entry, index) => {
                   const tone = getTone(entry.type);
-                  const babyName = getBabyDisplayName(entry.babyId);
-                  const avatarSrc = getBabyAvatarSrc(entry.babyId);
-                  const avatarEmoji = getBabyAvatarEmoji(entry.babyId);
+                  const babyName = getBabyDisplayName(
+                    babyProfiles,
+                    entry.babyId,
+                  );
+                  const avatarSrc = getBabyAvatarSrc(
+                    babyProfiles,
+                    entry.babyId,
+                  );
+                  const avatarEmoji = getBabyAvatarEmoji(
+                    babyProfiles,
+                    entry.babyId,
+                  );
                   const secondaryNote = getSecondaryNote(entry);
 
                   return (
@@ -467,7 +472,9 @@ export default function RecentTrackingList({
                               ) : avatarEmoji ? (
                                 <span>{avatarEmoji}</span>
                               ) : (
-                                <span>{getBabyInitial(entry.babyId)}</span>
+                                <span>
+                                  {getBabyInitial(babyProfiles, entry.babyId)}
+                                </span>
                               )}
                             </div>
                             <p className="truncate text-xs font-black">
@@ -495,7 +502,7 @@ export default function RecentTrackingList({
                       Insight hôm nay
                     </p>
                     <p className="mt-1 text-sm font-bold leading-6 text-slate-600">
-                      {getDailyInsight(dayEntries)}
+                      {getDailyInsight(dayEntries, babyProfiles)}
                     </p>
                   </div>
                 </div>
@@ -532,7 +539,7 @@ export default function RecentTrackingList({
                   </p>
                   <p className="mt-1 text-xs font-bold text-slate-400">
                     {formatTime(selectedEntry.createdAt)} •{" "}
-                    {getBabyDisplayName(selectedEntry.babyId)}
+                    {getBabyDisplayName(babyProfiles, selectedEntry.babyId)}
                   </p>
                 </div>
               </div>

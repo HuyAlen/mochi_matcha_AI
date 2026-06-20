@@ -95,11 +95,11 @@ function TwinOverviewSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
         {babies.map((baby) => (
           <div
             key={baby.id}
-            className="min-h-[178px] rounded-[32px] border border-pink-100/80 bg-white p-4 shadow-[0_18px_45px_rgba(244,114,182,0.10)]"
+            className="min-h-[156px] rounded-[28px] border border-pink-100/80 bg-white p-3.5 shadow-[0_18px_45px_rgba(244,114,182,0.10)]"
           >
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 animate-pulse rounded-full bg-slate-100" />
@@ -109,10 +109,10 @@ function TwinOverviewSkeleton() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              <div className="h-20 animate-pulse rounded-2xl bg-slate-50" />
-              <div className="h-20 animate-pulse rounded-2xl bg-slate-50" />
-              <div className="h-20 animate-pulse rounded-2xl bg-slate-50" />
+            <div className="mt-4 space-y-2">
+              <div className="h-9 animate-pulse rounded-2xl bg-slate-50" />
+              <div className="h-9 animate-pulse rounded-2xl bg-slate-50" />
+              <div className="h-9 animate-pulse rounded-2xl bg-slate-50" />
             </div>
           </div>
         ))}
@@ -188,7 +188,7 @@ export default function TwinOverviewCard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
         {babies.map((baby) => (
           <BabySummaryCard
             key={baby.id}

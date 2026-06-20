@@ -3,6 +3,9 @@ import { Be_Vietnam_Pro } from "next/font/google";
 
 import "./globals.css";
 
+import AuthProvider from "@/components/auth/AuthProvider";
+import SyncProvider from "@/components/sync/SyncProvider";
+
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700", "800", "900"],
@@ -22,16 +25,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      {
-        url: "/icons/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-      },
-      {
-        url: "/icons/icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-      },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
   },
@@ -53,12 +48,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="vi">
-      <body className={beVietnamPro.variable}>{children}</body>
+    <html lang="vi" suppressHydrationWarning>
+      <body className={beVietnamPro.variable}>
+        <AuthProvider>
+          <SyncProvider>{children}</SyncProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

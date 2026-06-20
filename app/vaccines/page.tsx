@@ -74,7 +74,10 @@ export default function VaccinesPage() {
 
         <UpcomingVaccineCard records={babyRecords} onComplete={markCompleted} />
 
-        <VaccineScheduleList records={babyRecords} />
+        <VaccineScheduleList
+          records={babyRecords}
+          onMarkCompleted={(record) => markCompleted(record.id)}
+        />
 
         <VaccineReactionTracker
           babyId={selectedBabyId}

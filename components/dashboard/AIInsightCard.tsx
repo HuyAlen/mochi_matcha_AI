@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useTrackingStore } from "@/src/store/trackingStore";
 import type { BabyId } from "@/types/baby";
 import type { TrackingEntry } from "@/types/tracking";
@@ -433,6 +433,7 @@ function buildRealInsight(ctx: InsightContext): CareCoachInsight {
 
 export default function AIInsightCard() {
   const isHydrated = useIsHydrated();
+  const [expanded, setExpanded] = useState(false);
 
   const getTodayEntries = useTrackingStore(
     (state: { getTodayEntries: (babyId?: BabyId) => TrackingEntry[] }) =>
@@ -459,58 +460,70 @@ export default function AIInsightCard() {
   }, [getEntriesByDate, getTodayEntries, isHydrated]);
 
   return (
-    <section className="rounded-[1.75rem] bg-white p-5 shadow-sm ring-1 ring-slate-100">
-      <div className="flex items-start gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 text-2xl ring-1 ring-pink-100">
+    <section className="rounded-[1.75rem] bg-white p-4 shadow-sm ring-1 ring-slate-100">
+      <div className="flex items-start gap-3">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 text-xl ring-1 ring-pink-100">
           🤖
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
               AI Care Coach
             </p>
 
             <span
-              className={`rounded-full px-2.5 py-1 text-[11px] font-black ring-1 ${toneClass[insight.tone]}`}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-black ring-1 ${toneClass[insight.tone]}`}
             >
               {insight.icon} {insight.label}
             </span>
           </div>
 
-          <h3 className="mt-2 text-lg font-black leading-snug text-slate-950">
+          <h3 className="mt-2 line-clamp-2 text-base font-black leading-snug text-slate-950">
             {insight.title}
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-slate-500">
+          <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-6 text-slate-500">
             {insight.description}
           </p>
 
-          <div className="mt-4 rounded-2xl bg-gradient-to-br from-pink-50 via-white to-purple-50 p-3 ring-1 ring-pink-100/70">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-pink-400">
-              Gợi ý của Mind AI
-            </p>
-            <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
-              {insight.recommendation}
-            </p>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="h-2 rounded-full bg-slate-100">
-                <div
-                  className="h-2 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 transition-all"
-                  style={{ width: `${Math.max(8, insight.score)}%` }}
-                />
+          {expanded ? (
+            <div className="mt-3 space-y-3">
+              <div className="rounded-2xl bg-gradient-to-br from-pink-50 via-white to-purple-50 p-3 ring-1 ring-pink-100/70">
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-pink-400">
+                  Gợi ý của Mind AI
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
+                  {insight.recommendation}
+                </p>
               </div>
-              <p className="mt-1 text-[11px] font-bold text-slate-400">
-                Độ đầy đủ dữ liệu: {insight.score}%
-              </p>
+
+              <div className="min-w-0">
+                <div className="h-2 rounded-full bg-slate-100">
+                  <div
+                    className="h-2 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 transition-all"
+                    style={{ width: `${Math.max(8, insight.score)}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-[11px] font-bold text-slate-400">
+                  Độ đầy đủ dữ liệu: {insight.score}%
+                </p>
+              </div>
             </div>
+          ) : null}
+
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setExpanded((value) => !value)}
+              className="rounded-full bg-slate-50 px-3 py-2 text-xs font-black text-slate-600 ring-1 ring-slate-100 transition active:scale-95"
+            >
+              {expanded ? "Thu gọn" : "Xem phân tích"}
+            </button>
 
             <Link
               href="/ai-coach"
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2.5 text-xs font-black text-white shadow-sm transition active:scale-95"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2 text-xs font-black text-white shadow-sm transition active:scale-95"
             >
               Mở AI Coach
             </Link>

@@ -21,6 +21,7 @@ interface TrackingState {
   duplicateEntry: (entryId: string) => void;
   deleteEntry: (entryId: string) => void;
   clearDemoEntries: () => void;
+  replaceEntries: (entries: TrackingEntry[]) => void;
   getTodayEntries: (babyId?: BabyId) => TrackingEntry[];
   getTodaySummary: (babyId?: BabyId) => TrackingTodaySummary;
   getEntriesByDate: (date: Date, babyId?: BabyId) => TrackingEntry[];
@@ -53,7 +54,7 @@ function createEntryId() {
   return `tracking-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const now = new Date().toISOString();
+const DEMO_CREATED_AT = "2026-06-20T15:00:00.000Z";
 
 const demoEntries: TrackingEntry[] = [
   {
@@ -63,7 +64,7 @@ const demoEntries: TrackingEntry[] = [
     value: 120,
     unit: "ml",
     note: "Bé bú tốt",
-    createdAt: now,
+    createdAt: DEMO_CREATED_AT,
   },
   {
     id: "demo-mochi-sleep",
@@ -72,7 +73,7 @@ const demoEntries: TrackingEntry[] = [
     value: 1.5,
     unit: "giờ",
     note: "Ngủ trưa",
-    createdAt: now,
+    createdAt: DEMO_CREATED_AT,
   },
   {
     id: "demo-matcha-milk",
@@ -81,7 +82,7 @@ const demoEntries: TrackingEntry[] = [
     value: 90,
     unit: "ml",
     note: "Bú bình",
-    createdAt: now,
+    createdAt: DEMO_CREATED_AT,
   },
   {
     id: "demo-matcha-diaper",
@@ -90,7 +91,7 @@ const demoEntries: TrackingEntry[] = [
     value: 1,
     unit: "lần",
     note: "Tã ướt",
-    createdAt: now,
+    createdAt: DEMO_CREATED_AT,
   },
 ];
 
@@ -180,6 +181,11 @@ export const useTrackingStore = create<TrackingState>()(
             (entry) => !entry.id.startsWith("demo-"),
           ),
         })),
+
+      replaceEntries: (entries) =>
+        set({
+          entries: sortNewestFirst(entries),
+        }),
 
       getTodayEntries: (babyId) => {
         return sortNewestFirst(

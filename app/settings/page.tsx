@@ -7,7 +7,7 @@ import SyncStatusCard from "@/components/settings/SyncStatusCard";
 export default function SettingsPage() {
   return (
     <AppShell>
-      <section className="space-y-3 pb-4">
+      <section className="space-y-4 pb-8">
         <ProfileCard />
         <SettingsMenu />
         <SyncStatusCard />

@@ -87,11 +87,11 @@ export default function BabySummaryCard({ baby }: BabySummaryCardProps) {
 
   return (
     <article
-      className={`rounded-[1.5rem] bg-white p-4 shadow-sm ring-1 ${tone.ringClass}`}
+      className={`rounded-[1.5rem] bg-white p-3.5 shadow-sm ring-1 ${tone.ringClass}`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <div
-          className={`flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${tone.bgClass} text-2xl`}
+          className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${tone.bgClass} text-xl`}
         >
           {profileBaby.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -105,44 +105,38 @@ export default function BabySummaryCard({ baby }: BabySummaryCardProps) {
           )}
         </div>
 
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`size-2 rounded-full ${tone.dotClass}`} />
-            <h3 className="truncate font-black text-slate-950">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className={`size-2 shrink-0 rounded-full ${tone.dotClass}`} />
+            <h3 className="min-w-0 text-sm font-black leading-tight text-slate-950">
               {displayName}
             </h3>
           </div>
 
-          <p className={`mt-0.5 text-xs font-bold ${tone.textClass}`}>
+          <p className={`mt-0.5 text-[11px] font-bold ${tone.textClass}`}>
             Hôm nay
           </p>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <div className="rounded-2xl bg-slate-50 p-3 text-center">
-          <p className="text-sm font-black text-slate-950">
-            {formatNumber(milk)}
-          </p>
-          <p className="mt-1 text-[10px] font-semibold text-slate-400">
-            ml sữa
-          </p>
+      <div className="mt-3 space-y-2">
+        <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+          <span className="text-base">🍼</span>
+          <span className="text-sm font-black text-slate-950">
+            {formatNumber(milk)}ml
+          </span>
         </div>
 
-        <div className="rounded-2xl bg-slate-50 p-3 text-center">
-          <p className="text-sm font-black text-slate-950">
-            {formatNumber(sleep)}
-          </p>
-          <p className="mt-1 text-[10px] font-semibold text-slate-400">
-            giờ ngủ
-          </p>
+        <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+          <span className="text-base">😴</span>
+          <span className="text-sm font-black text-slate-950">
+            {formatNumber(sleep)}h
+          </span>
         </div>
 
-        <div className="rounded-2xl bg-slate-50 p-3 text-center">
-          <p className="text-sm font-black text-slate-950">{meals}</p>
-          <p className="mt-1 text-[10px] font-semibold text-slate-400">
-            bữa ăn
-          </p>
+        <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+          <span className="text-base">🍚</span>
+          <span className="text-sm font-black text-slate-950">{meals} bữa</span>
         </div>
       </div>
     </article>

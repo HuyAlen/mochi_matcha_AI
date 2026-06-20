@@ -1,12 +1,16 @@
 "use client";
 
-import type { BabyId } from "@/types/baby";
+import { useBabyStore } from "@/src/store/babyStore";
+import type { Baby, BabyId } from "@/types/baby";
 import type { TrackingType } from "@/types/tracking";
 
-const babyMeta: Record<BabyId, { name: string; emoji: string }> = {
-  mochi: { name: "Mochi", emoji: "🎀" },
-  matcha: { name: "Matcha", emoji: "🌸" },
-};
+function getBabyDisplayName(baby: Baby) {
+  return baby.nickname?.trim() || baby.name?.trim() || "Bé";
+}
+
+function getBabyAvatar(baby: Baby) {
+  return baby.avatarEmoji?.trim() || "👶";
+}
 
 const activityOptions: {
   type: TrackingType;
@@ -73,9 +77,14 @@ export default function AddActivitySheet({
   onClose,
   onSelectActivity,
 }: AddActivitySheetProps) {
-  if (!open) return null;
+  const babyProfiles = useBabyStore((state) => state.babyProfiles);
+  const selectedBaby =
+    babyProfiles.find((baby) => baby.id === selectedBabyId) ?? babyProfiles[0];
+  const selectedBabyName = selectedBaby
+    ? getBabyDisplayName(selectedBaby)
+    : "bé";
 
-  const selectedBaby = babyMeta[selectedBabyId];
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/20 px-3 pb-[calc(6.75rem+env(safe-area-inset-bottom))] backdrop-blur-[2px]">
@@ -95,7 +104,7 @@ export default function AddActivitySheet({
               Quick add
             </p>
             <h3 className="mt-1 text-lg font-black text-slate-950">
-              Ghi gì cho {selectedBaby.name}?
+              Ghi gì cho {selectedBabyName}?
             </h3>
           </div>
 
@@ -110,29 +119,27 @@ export default function AddActivitySheet({
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
-          {(Object.keys(babyMeta) as BabyId[]).map((babyId) => {
-            const baby = babyMeta[babyId];
-
-            return (
-              <button
-                key={babyId}
-                type="button"
-                onClick={() => onBabyChange(babyId)}
-                className={`rounded-[1.35rem] p-3 text-left ring-1 transition active:scale-[0.98] ${
-                  selectedBabyId === babyId
-                    ? "bg-pink-50 ring-pink-300"
-                    : "bg-slate-50 ring-slate-100"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
-                    {baby.emoji}
-                  </span>
-                  <span className="font-black text-slate-900">{baby.name}</span>
-                </div>
-              </button>
-            );
-          })}
+          {babyProfiles.map((baby) => (
+            <button
+              key={baby.id}
+              type="button"
+              onClick={() => onBabyChange(baby.id)}
+              className={`rounded-[1.35rem] p-3 text-left ring-1 transition active:scale-[0.98] ${
+                selectedBabyId === baby.id
+                  ? "bg-pink-50 ring-pink-300"
+                  : "bg-slate-50 ring-slate-100"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
+                  {getBabyAvatar(baby)}
+                </span>
+                <span className="font-black text-slate-900">
+                  {getBabyDisplayName(baby)}
+                </span>
+              </div>
+            </button>
+          ))}
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2.5">

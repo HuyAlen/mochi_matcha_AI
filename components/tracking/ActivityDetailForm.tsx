@@ -1,13 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { BabyId } from "@/types/baby";
+import { useBabyStore } from "@/src/store/babyStore";
+import type { Baby, BabyId } from "@/types/baby";
 import type { TrackingEntry, TrackingType } from "@/types/tracking";
 
-const babyMeta: Record<BabyId, { name: string; emoji: string }> = {
-  mochi: { name: "Mochi", emoji: "🎀" },
-  matcha: { name: "Matcha", emoji: "🌸" },
-};
+function getBabyDisplayName(baby: Baby | undefined) {
+  return baby?.nickname?.trim() || baby?.name?.trim() || "Bé";
+}
+
+function getBabyAvatar(baby: Baby | undefined) {
+  return baby?.avatarEmoji?.trim() || "👶";
+}
 
 type ActivityConfig = {
   title: string;
@@ -216,7 +220,10 @@ export default function ActivityDetailForm({
   onSave,
 }: ActivityDetailFormProps) {
   const item = config[type];
-  const baby = babyMeta[babyId];
+  const babyProfiles = useBabyStore((state) => state.babyProfiles);
+  const baby = babyProfiles.find((profile) => profile.id === babyId);
+  const babyName = getBabyDisplayName(baby);
+  const babyAvatar = getBabyAvatar(baby);
 
   const [value, setValue] = useState(initialEntry?.value ?? item.defaultValue);
   const [note, setNote] = useState(initialEntry?.note ?? "");
@@ -267,7 +274,7 @@ export default function ActivityDetailForm({
                 {item.title}
               </h3>
               <p className="mt-1 text-sm font-bold text-slate-500">
-                {baby.emoji} {baby.name} • {displayTime}
+                {babyAvatar} {babyName} • {displayTime}
               </p>
             </div>
           </div>

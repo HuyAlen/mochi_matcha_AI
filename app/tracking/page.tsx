@@ -7,7 +7,7 @@ import ActivityDetailForm from "@/components/tracking/ActivityDetailForm";
 import ActivitySheetRouter from "@/components/tracking/sheets/ActivitySheetRouter";
 import RecentTrackingList from "@/components/tracking/RecentTrackingList";
 import AppShell from "@/components/layout/AppShell";
-import { babies } from "@/src/store/babyStore";
+import { useBabyStore } from "@/src/store/babyStore";
 import {
   getTrackingIcon,
   getTrackingLabel,
@@ -20,6 +20,14 @@ import type { TrackingEntry, TrackingType } from "@/types/tracking";
 type BabyFilter = BabyId | "all";
 type DateFilter = "today" | "7d" | "30d" | "all";
 type TypeFilter = TrackingType | "all";
+
+function getBabyDisplayName(baby: { name?: string; nickname?: string }) {
+  return baby.nickname?.trim() || baby.name?.trim() || "Bé";
+}
+
+function getBabyAvatar(baby: { avatarEmoji?: string }) {
+  return baby.avatarEmoji?.trim() || "👶";
+}
 
 const quickTypes = [
   "milk",
@@ -268,6 +276,7 @@ function TrackingPageContent() {
   const [editingEntry, setEditingEntry] = useState<TrackingEntry | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
+  const babyProfiles = useBabyStore((state) => state.babyProfiles);
   const entries = useTrackingStore((state) => state.entries);
   const addEntry = useTrackingStore((state) => state.addEntry);
   const updateEntry = useTrackingStore((state) => state.updateEntry);
@@ -330,10 +339,11 @@ function TrackingPageContent() {
     addEntry(entry);
     setSelectedType(null);
     if (quickType) closeQuickSheet();
-    const baby = babies.find((item) => item.id === entry.babyId) ?? babies[0];
+    const baby =
+      babyProfiles.find((item) => item.id === entry.babyId) ?? babyProfiles[0];
     showToast({
       tone: "success",
-      message: `✅ Đã ghi nhận ${getTypeToastLabel(entry.type)} cho ${baby.name}`,
+      message: `✅ Đã ghi nhận ${getTypeToastLabel(entry.type)} cho ${getBabyDisplayName(baby)}`,
     });
   }
 
@@ -371,7 +381,8 @@ function TrackingPageContent() {
                 Theo dõi chăm bé
               </h1>
               <p className="mt-1 text-sm font-bold text-slate-500">
-                Mochi & Matcha • {todayLabel()}
+                {babyProfiles.map(getBabyDisplayName).join(" & ")} •{" "}
+                {todayLabel()}
               </p>
             </div>
           </div>
@@ -402,13 +413,13 @@ function TrackingPageContent() {
             >
               Tất cả
             </FilterPill>
-            {babies.map((baby) => (
+            {babyProfiles.map((baby) => (
               <FilterPill
                 key={baby.id}
                 active={babyFilter === baby.id}
                 onClick={() => setBabyFilter(baby.id)}
               >
-                {baby.avatarEmoji} {baby.name}
+                {getBabyAvatar(baby)} {getBabyDisplayName(baby)}
               </FilterPill>
             ))}
           </div>

@@ -98,6 +98,7 @@ type BabyStore = {
   setSelectedBabyId: (id: BabyId) => void;
   updateBabyProfile: (id: BabyId, data: Partial<Baby>) => void;
   resetBabyProfiles: () => void;
+  replaceBabyProfiles: (profiles: Baby[]) => void;
 };
 
 export const useBabyStore = create<BabyStore>()(
@@ -124,6 +125,11 @@ export const useBabyStore = create<BabyStore>()(
         set({
           babyProfiles: babies,
           selectedBabyId: "mochi",
+        }),
+
+      replaceBabyProfiles: (profiles) =>
+        set({
+          babyProfiles: normalizeBabyProfiles(profiles),
         }),
     }),
     {

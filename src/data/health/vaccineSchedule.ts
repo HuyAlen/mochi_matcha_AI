@@ -30,22 +30,6 @@ export const vaccineDoses: VaccineDose[] = [
     description: "Mũi phối hợp giai đoạn đầu.",
   },
   {
-    id: "dtap-ipv-hib-2",
-    name: "5 trong 1",
-    disease: "Bạch hầu, ho gà, uốn ván, bại liệt, Hib",
-    recommendedAgeMonths: 3,
-    doseLabel: "Mũi 2",
-    description: "Mũi nhắc theo lịch.",
-  },
-  {
-    id: "dtap-ipv-hib-3",
-    name: "5 trong 1",
-    disease: "Bạch hầu, ho gà, uốn ván, bại liệt, Hib",
-    recommendedAgeMonths: 4,
-    doseLabel: "Mũi 3",
-    description: "Hoàn tất loạt mũi cơ bản.",
-  },
-  {
     id: "rota-1",
     name: "Rota",
     disease: "Tiêu chảy do Rotavirus",
@@ -60,6 +44,55 @@ export const vaccineDoses: VaccineDose[] = [
     recommendedAgeMonths: 2,
     doseLabel: "Mũi 1",
     description: "Phòng các bệnh do phế cầu.",
+  },
+  {
+    id: "dtap-ipv-hib-2",
+    name: "5 trong 1",
+    disease: "Bạch hầu, ho gà, uốn ván, bại liệt, Hib",
+    recommendedAgeMonths: 3,
+    doseLabel: "Mũi 2",
+    description: "Mũi nhắc theo lịch.",
+  },
+  {
+    id: "rota-2",
+    name: "Rota",
+    disease: "Tiêu chảy do Rotavirus",
+    recommendedAgeMonths: 3,
+    doseLabel: "Liều 2",
+    description: "Liều nhắc phòng Rotavirus.",
+  },
+  {
+    id: "pcv-2",
+    name: "Phế cầu",
+    disease: "Bệnh do phế cầu",
+    recommendedAgeMonths: 3,
+    doseLabel: "Mũi 2",
+    description: "Mũi nhắc phòng các bệnh do phế cầu.",
+  },
+  {
+    id: "dtap-ipv-hib-3",
+    name: "5 trong 1",
+    disease: "Bạch hầu, ho gà, uốn ván, bại liệt, Hib",
+    recommendedAgeMonths: 4,
+    doseLabel: "Mũi 3",
+    description: "Hoàn tất loạt mũi cơ bản.",
+  },
+  {
+    id: "pcv-3",
+    name: "Phế cầu",
+    disease: "Bệnh do phế cầu",
+    recommendedAgeMonths: 4,
+    doseLabel: "Mũi 3",
+    description: "Mũi cơ bản tiếp theo trong năm đầu.",
+  },
+  {
+    id: "influenza-1",
+    name: "Cúm mùa",
+    disease: "Cúm mùa",
+    recommendedAgeMonths: 6,
+    doseLabel: "Mũi đầu",
+    description:
+      "Thường bắt đầu từ 6 tháng tuổi, cần nhắc hằng năm theo tư vấn bác sĩ.",
   },
   {
     id: "measles-1",
@@ -77,9 +110,34 @@ export const vaccineDoses: VaccineDose[] = [
     doseLabel: "Mũi 1",
     description: "Mũi phối hợp sởi, quai bị, rubella.",
   },
+  {
+    id: "varicella-1",
+    name: "Thủy đậu",
+    disease: "Thủy đậu",
+    recommendedAgeMonths: 12,
+    doseLabel: "Mũi 1",
+    description: "Mũi đầu phòng thủy đậu theo tư vấn lịch tiêm dịch vụ.",
+  },
+  {
+    id: "japanese-encephalitis-1",
+    name: "Viêm não Nhật Bản",
+    disease: "Viêm não Nhật Bản",
+    recommendedAgeMonths: 12,
+    doseLabel: "Mũi 1",
+    description:
+      "Lịch tiêm cần theo loại vaccine và hướng dẫn cơ sở tiêm chủng.",
+  },
+  {
+    id: "dtap-ipv-hib-booster",
+    name: "5 trong 1",
+    disease: "Bạch hầu, ho gà, uốn ván, bại liệt, Hib",
+    recommendedAgeMonths: 18,
+    doseLabel: "Nhắc lại",
+    description: "Mũi nhắc sau loạt tiêm cơ bản.",
+  },
 ];
 
-export const babyVaccineRecords: BabyVaccineRecord[] = [
+export const completedVaccineRecords: BabyVaccineRecord[] = [
   {
     id: "r-mochi-bcg",
     babyId: "mochi",
@@ -117,37 +175,9 @@ export const babyVaccineRecords: BabyVaccineRecord[] = [
     status: "completed",
     location: "Trung tâm tiêm chủng",
   },
-  {
-    id: "r-mochi-measles",
-    babyId: "mochi",
-    vaccineId: "measles-1",
-    scheduledDate: "2026-07-16",
-    status: "upcoming",
-    location: "Trung tâm tiêm chủng",
-  },
-  {
-    id: "r-matcha-measles",
-    babyId: "matcha",
-    vaccineId: "measles-1",
-    scheduledDate: "2026-07-16",
-    status: "upcoming",
-    location: "Trung tâm tiêm chủng",
-  },
-  {
-    id: "r-mochi-mmr",
-    babyId: "mochi",
-    vaccineId: "mmr-1",
-    scheduledDate: "2026-10-16",
-    status: "upcoming",
-  },
-  {
-    id: "r-matcha-mmr",
-    babyId: "matcha",
-    vaccineId: "mmr-1",
-    scheduledDate: "2026-10-16",
-    status: "upcoming",
-  },
 ];
+
+export const babyVaccineRecords = completedVaccineRecords;
 
 export const vaccineReactions: VaccineReaction[] = [
   {
