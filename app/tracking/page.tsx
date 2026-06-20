@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import ActivityDetailForm from "@/components/tracking/ActivityDetailForm";
+import ActivitySheetRouter from "@/components/tracking/sheets/ActivitySheetRouter";
 import RecentTrackingList from "@/components/tracking/RecentTrackingList";
 import AppShell from "@/components/layout/AppShell";
 import { babies } from "@/src/store/babyStore";
@@ -18,6 +20,27 @@ import type { TrackingEntry, TrackingType } from "@/types/tracking";
 type BabyFilter = BabyId | "all";
 type DateFilter = "today" | "7d" | "30d" | "all";
 type TypeFilter = TrackingType | "all";
+
+const quickTypes = [
+  "milk",
+  "sleep",
+  "meal",
+  "diaper",
+  "temperature",
+  "medicine",
+] as const satisfies readonly TrackingType[];
+
+function normalizeQuickType(value: string | null): TrackingType | null {
+  if (!value) return null;
+  return quickTypes.includes(value as (typeof quickTypes)[number])
+    ? (value as TrackingType)
+    : null;
+}
+
+function normalizeBabyId(value: string | null): BabyId | null {
+  if (value === "mochi" || value === "matcha") return value;
+  return null;
+}
 
 type ToastState = {
   message: string;
@@ -228,7 +251,15 @@ function AIInsightMini({ entries }: { entries: TrackingEntry[] }) {
   );
 }
 
-export default function TrackingPage() {
+function TrackingPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const quickType = normalizeQuickType(searchParams.get("quick"));
+  const queryBabyId = normalizeBabyId(
+    searchParams.get("babyId") || searchParams.get("baby"),
+  );
+
   const [babyFilter, setBabyFilter] = useState<BabyFilter>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("today");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -243,6 +274,8 @@ export default function TrackingPage() {
   const duplicateEntry = useTrackingStore((state) => state.duplicateEntry);
   const deleteEntry = useTrackingStore((state) => state.deleteEntry);
 
+  const effectiveSelectedBabyId = queryBabyId ?? selectedBabyId;
+
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
       const matchBaby =
@@ -253,6 +286,32 @@ export default function TrackingPage() {
       return matchBaby && matchType && matchDate;
     });
   }, [babyFilter, dateFilter, entries, typeFilter]);
+
+  function closeQuickSheet() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("quick");
+    params.delete("baby");
+    params.delete("babyId");
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    });
+  }
+
+  function handleQuickBabyChange(nextBabyId: BabyId) {
+    setSelectedBabyId(nextBabyId);
+
+    if (!quickType) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("quick", quickType);
+    params.set("baby", nextBabyId);
+    params.set("babyId", nextBabyId);
+
+    router.replace(`${pathname}?${params.toString()}`, {
+      scroll: false,
+    });
+  }
 
   function showToast(nextToast: ToastState) {
     setToast(nextToast);
@@ -270,6 +329,7 @@ export default function TrackingPage() {
 
     addEntry(entry);
     setSelectedType(null);
+    if (quickType) closeQuickSheet();
     const baby = babies.find((item) => item.id === entry.babyId) ?? babies[0];
     showToast({
       tone: "success",
@@ -406,7 +466,17 @@ export default function TrackingPage() {
         />
       </section>
 
-      {selectedType ? (
+      {quickType && !editingEntry ? (
+        <ActivitySheetRouter
+          type={quickType}
+          babyId={effectiveSelectedBabyId}
+          onBabyChange={handleQuickBabyChange}
+          onClose={closeQuickSheet}
+          onSave={handleSave}
+        />
+      ) : null}
+
+      {selectedType && editingEntry ? (
         <ActivityDetailForm
           type={selectedType}
           babyId={selectedBabyId}
@@ -419,5 +489,13 @@ export default function TrackingPage() {
         />
       ) : null}
     </AppShell>
+  );
+}
+
+export default function TrackingPage() {
+  return (
+    <Suspense fallback={null}>
+      <TrackingPageContent />
+    </Suspense>
   );
 }

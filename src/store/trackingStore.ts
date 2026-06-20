@@ -23,17 +23,26 @@ interface TrackingState {
   clearDemoEntries: () => void;
   getTodayEntries: (babyId?: BabyId) => TrackingEntry[];
   getTodaySummary: (babyId?: BabyId) => TrackingTodaySummary;
+  getEntriesByDate: (date: Date, babyId?: BabyId) => TrackingEntry[];
+  getEntriesInRange: (
+    startDate: Date,
+    endDate: Date,
+    babyId?: BabyId,
+  ) => TrackingEntry[];
+}
+
+function isSameDay(date: string | Date, targetDate: Date) {
+  const input = new Date(date);
+
+  return (
+    input.getDate() === targetDate.getDate() &&
+    input.getMonth() === targetDate.getMonth() &&
+    input.getFullYear() === targetDate.getFullYear()
+  );
 }
 
 function isToday(date: string) {
-  const input = new Date(date);
-  const now = new Date();
-
-  return (
-    input.getDate() === now.getDate() &&
-    input.getMonth() === now.getMonth() &&
-    input.getFullYear() === now.getFullYear()
-  );
+  return isSameDay(date, new Date());
 }
 
 function createEntryId() {
@@ -84,6 +93,12 @@ const demoEntries: TrackingEntry[] = [
     createdAt: now,
   },
 ];
+
+function sortNewestFirst(entries: TrackingEntry[]) {
+  return [...entries].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
 
 function summarize(entries: TrackingEntry[]): TrackingTodaySummary {
   return entries.reduce<TrackingTodaySummary>(
@@ -167,18 +182,37 @@ export const useTrackingStore = create<TrackingState>()(
         })),
 
       getTodayEntries: (babyId) => {
-        return get()
-          .entries.filter((entry) => {
+        return sortNewestFirst(
+          get().entries.filter((entry) => {
             const sameBaby = babyId ? entry.babyId === babyId : true;
             return sameBaby && isToday(entry.createdAt);
-          })
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          );
+          }),
+        );
       },
 
       getTodaySummary: (babyId) => summarize(get().getTodayEntries(babyId)),
+
+      getEntriesByDate: (date, babyId) => {
+        return sortNewestFirst(
+          get().entries.filter((entry) => {
+            const sameBaby = babyId ? entry.babyId === babyId : true;
+            return sameBaby && isSameDay(entry.createdAt, date);
+          }),
+        );
+      },
+
+      getEntriesInRange: (startDate, endDate, babyId) => {
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+
+        return sortNewestFirst(
+          get().entries.filter((entry) => {
+            const entryTime = new Date(entry.createdAt).getTime();
+            const sameBaby = babyId ? entry.babyId === babyId : true;
+            return sameBaby && entryTime >= startTime && entryTime <= endTime;
+          }),
+        );
+      },
     }),
     {
       name: "mind-ai-tracking-store-v1",

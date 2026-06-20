@@ -52,9 +52,9 @@ const activityOptions: {
   },
   {
     type: "medicine",
-    label: "Thuốc",
-    icon: "💊",
-    description: "Liều dùng",
+    label: "Vaccine",
+    icon: "💉",
+    description: "Mũi tiêm hoặc thuốc",
   },
 ];
 
@@ -78,14 +78,23 @@ export default function AddActivitySheet({
   const selectedBaby = babyMeta[selectedBabyId];
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/30 px-3 pb-3 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-[2rem] bg-white p-5 shadow-2xl">
-        <div className="mb-5 flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/20 px-3 pb-[calc(6.75rem+env(safe-area-inset-bottom))] backdrop-blur-[2px]">
+      <button
+        type="button"
+        aria-label="Đóng ghi nhanh"
+        onClick={onClose}
+        className="absolute inset-0"
+      />
+
+      <div className="relative w-full max-w-md rounded-[2rem] bg-white p-4 shadow-[0_20px_60px_rgba(236,72,153,0.22)] ring-1 ring-pink-100">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-pink-100" />
+
+        <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-pink-400">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
               Quick add
             </p>
-            <h3 className="mt-1 text-xl font-black text-slate-950">
+            <h3 className="mt-1 text-lg font-black text-slate-950">
               Ghi gì cho {selectedBaby.name}?
             </h3>
           </div>
@@ -93,14 +102,14 @@ export default function AddActivitySheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-pink-50 text-sm font-black text-pink-500 ring-1 ring-pink-100"
             aria-label="Đóng"
           >
             ✕
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           {(Object.keys(babyMeta) as BabyId[]).map((babyId) => {
             const baby = babyMeta[babyId];
 
@@ -109,14 +118,14 @@ export default function AddActivitySheet({
                 key={babyId}
                 type="button"
                 onClick={() => onBabyChange(babyId)}
-                className={`rounded-3xl p-3 text-left ring-1 transition ${
+                className={`rounded-[1.35rem] p-3 text-left ring-1 transition active:scale-[0.98] ${
                   selectedBabyId === babyId
                     ? "bg-pink-50 ring-pink-300"
                     : "bg-slate-50 ring-slate-100"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="flex size-11 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
+                  <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
                     {baby.emoji}
                   </span>
                   <span className="font-black text-slate-900">{baby.name}</span>
@@ -126,30 +135,26 @@ export default function AddActivitySheet({
           })}
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
           {activityOptions.map((item) => (
             <button
               key={item.type}
               type="button"
               onClick={() => onSelectActivity(item.type)}
-              className="rounded-3xl bg-slate-50 p-4 text-left transition active:scale-[0.98]"
+              className="rounded-[1.35rem] bg-pink-50/70 p-3 text-left ring-1 ring-pink-100 transition active:scale-[0.98]"
             >
-              <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
+              <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-xl shadow-sm">
                 {item.icon}
               </span>
-              <p className="mt-3 font-black text-slate-950">{item.label}</p>
-              <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+              <p className="mt-2 text-sm font-black text-slate-950">
+                {item.label}
+              </p>
+              <p className="mt-0.5 text-[11px] font-semibold text-slate-400">
+                {item.description}
+              </p>
             </button>
           ))}
         </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 w-full rounded-2xl bg-slate-50 py-3 text-sm font-bold text-slate-500"
-        >
-          Hủy
-        </button>
       </div>
     </div>
   );
