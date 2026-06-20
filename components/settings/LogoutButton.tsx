@@ -8,9 +8,10 @@ export default function LogoutButton() {
   async function handleLogout() {
     try {
       await logout();
-      window.location.replace("/login");
+      window.location.assign("/login");
     } catch (error) {
       console.error("Logout failed", error);
+      window.location.assign("/login");
     }
   }
 

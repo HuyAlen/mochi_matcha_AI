@@ -2,7 +2,6 @@
 
 import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
-
 import { supabase } from "@/lib/supabase/client";
 
 type AuthState = {
@@ -16,6 +15,18 @@ type AuthState = {
   logout: () => Promise<void>;
 };
 
+let authListenerReady = false;
+
+function clearSupabaseStorage() {
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith("sb-") || key.includes("supabase")) {
+      localStorage.removeItem(key);
+    }
+  });
+
+  sessionStorage.clear();
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   session: null,
@@ -23,8 +34,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialized: false,
 
   initAuth: async () => {
-    if (get().initialized) return;
-
     const { data, error } = await supabase.auth.getSession();
 
     set({
@@ -33,6 +42,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       loading: false,
       initialized: true,
     });
+
+    if (authListenerReady) return;
+    authListenerReady = true;
 
     supabase.auth.onAuthStateChange((_event, session) => {
       set({
@@ -70,8 +82,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       initialized: true,
     });
 
-    const { error } = await supabase.auth.signOut({ scope: "local" });
+    await supabase.auth.signOut({ scope: "local" });
 
-    if (error) throw error;
+    clearSupabaseStorage();
   },
 }));
