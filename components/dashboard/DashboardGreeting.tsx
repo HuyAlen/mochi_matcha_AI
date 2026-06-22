@@ -1,5 +1,33 @@
-function getGreeting() {
-  const hour = new Date().getHours();
+"use client";
+
+import { useSyncExternalStore } from "react";
+
+type Greeting = {
+  label: string;
+  icon: string;
+  message: string;
+};
+
+function getVietnamHour() {
+  if (typeof window === "undefined") return null;
+
+  const hour = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    hour12: false,
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).format(new Date());
+
+  return Number(hour);
+}
+
+function getGreeting(hour: number | null): Greeting {
+  if (hour === null) {
+    return {
+      label: "Chào",
+      icon: "👋",
+      message: "Mẹ nhớ cập nhật các cữ chăm sóc trong ngày nhé.",
+    };
+  }
 
   if (hour < 11) {
     return {
@@ -24,8 +52,27 @@ function getGreeting() {
   };
 }
 
+function subscribe(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+
+  const timer = window.setInterval(callback, 60_000);
+
+  return () => {
+    window.clearInterval(timer);
+  };
+}
+
+function getSnapshot() {
+  return getVietnamHour();
+}
+
+function getServerSnapshot() {
+  return null;
+}
+
 export default function DashboardGreeting() {
-  const greeting = getGreeting();
+  const hour = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const greeting = getGreeting(hour);
 
   return (
     <section className="relative overflow-hidden rounded-[1.75rem] border border-pink-100 bg-white px-5 py-6 shadow-[0_18px_45px_rgba(244,114,182,0.10)]">
