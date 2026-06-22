@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
+import type { ReactNode } from "react";
+
+import BottomNav from "@/components/layout/BottomNav";
 
 type AppShellProps = {
   children: ReactNode;
@@ -10,35 +11,38 @@ type AppShellProps = {
 
 export default function AppShell({ children }: AppShellProps) {
   const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
-
-  const handleLogout = async () => {
-    await logout();
-
-    router.replace("/login");
-    router.refresh();
-  };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Mind AI</p>
-            <p className="text-xs text-slate-500">Twin care assistant</p>
-          </div>
-
+    <div className="min-h-screen bg-[#fff7fb] text-slate-950">
+      <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#fff7fb]">
+        <header className="sticky top-0 z-30 border-b border-pink-100/70 bg-[#fff7fb]/92 px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)] backdrop-blur-xl">
           <button
             type="button"
-            onClick={handleLogout}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+            onClick={() => router.push("/dashboard")}
+            className="flex min-w-0 items-center gap-3 rounded-3xl text-left transition active:scale-[0.98]"
+            aria-label="Go to dashboard"
           >
-            Đăng xuất
-          </button>
-        </div>
-      </header>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl shadow-sm ring-1 ring-pink-100">
+              🎀
+            </div>
 
-      <main>{children}</main>
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-black tracking-tight text-slate-950">
+                Mochi & Matcha AI
+              </p>
+              <p className="truncate text-xs font-bold text-slate-400">
+                AI Parenting Companion
+              </p>
+            </div>
+          </button>
+        </header>
+
+        <main className="px-4 pb-[calc(7.75rem+env(safe-area-inset-bottom))] pt-4">
+          {children}
+        </main>
+
+        <BottomNav />
+      </div>
     </div>
   );
 }

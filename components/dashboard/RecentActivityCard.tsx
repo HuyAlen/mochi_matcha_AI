@@ -70,13 +70,8 @@ function formatDateTime(value?: string) {
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
 
-  if (isSameDay(date, now)) {
-    return `Hôm nay • ${formatTime(date)}`;
-  }
-
-  if (isSameDay(date, yesterday)) {
-    return `Hôm qua • ${formatTime(date)}`;
-  }
+  if (isSameDay(date, now)) return `Hôm nay • ${formatTime(date)}`;
+  if (isSameDay(date, yesterday)) return `Hôm qua • ${formatTime(date)}`;
 
   return `${date.toLocaleDateString("vi-VN", {
     day: "2-digit",
@@ -84,18 +79,40 @@ function formatDateTime(value?: string) {
   })} • ${formatTime(date)}`;
 }
 
+function formatNextFeed(value?: string) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return `Nhắc lại ${formatTime(date)}`;
+}
+
 function getBabyName(babyId?: string) {
   return babyId === "matcha" ? "Matcha" : "Mochi";
 }
 
+function formatNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
 function getEntryValue(entry: TrackingEntry, unit: string) {
   const value = Number(entry.value ?? 0);
-  const displayValue = Number.isInteger(value)
-    ? String(value)
-    : value.toFixed(1);
   const displayUnit = entry.unit || unit;
+  const base = displayUnit
+    ? `${formatNumber(value)} ${displayUnit}`
+    : formatNumber(value);
 
-  return displayUnit ? `${displayValue} ${displayUnit}` : displayValue;
+  if (entry.type !== "milk") return base;
+
+  const duration = Number(entry.durationMinutes ?? 0);
+  const nextFeed = formatNextFeed(entry.nextFeedAt);
+
+  const details = [duration > 0 ? `bú ${duration} phút` : "", nextFeed].filter(
+    Boolean,
+  );
+
+  return details.length ? `${base} • ${details.join(" • ")}` : base;
 }
 
 export default function RecentActivityCard() {
@@ -134,17 +151,17 @@ export default function RecentActivityCard() {
             return (
               <div
                 key={entry.id}
-                className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-100"
+                className="rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-100"
               >
-                <div className="flex min-w-0 items-center gap-3">
+                <div className="flex min-w-0 items-start gap-3">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white text-lg">
                     {display.icon}
                   </span>
 
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-2">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-black ${display.className}`}
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black ${display.className}`}
                       >
                         {display.label}
                       </span>
@@ -152,17 +169,24 @@ export default function RecentActivityCard() {
                         {getBabyName(String(entry.babyId))}
                       </p>
                     </div>
+
                     <p className="mt-1 text-xs font-semibold text-slate-400">
                       <span suppressHydrationWarning>
                         {formatDateTime(entry.createdAt)}
                       </span>
                     </p>
+
+                    <p className="mt-1.5 line-clamp-2 text-sm font-black leading-5 text-slate-700">
+                      {getEntryValue(entry, display.unit)}
+                    </p>
+
+                    {entry.note && (
+                      <p className="mt-1 line-clamp-1 text-xs font-semibold text-slate-400">
+                        {entry.note}
+                      </p>
+                    )}
                   </div>
                 </div>
-
-                <p className="shrink-0 text-sm font-bold text-slate-500">
-                  {getEntryValue(entry, display.unit)}
-                </p>
               </div>
             );
           })

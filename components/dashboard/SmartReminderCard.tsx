@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { babies } from "@/src/store/babyStore";
-import { useTrackingStore } from "@/store/trackingStore";
+import { useTrackingStore } from "@/src/store/trackingStore";
 import {
   getReminderTone,
   getSmartReminderResult,
@@ -27,8 +27,79 @@ function getCardTitle(reminders: SmartReminder[]) {
   return "Gợi ý chăm bé";
 }
 
+function formatTime(value: string) {
+  return new Date(value).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getNextFeed(
+  entries: ReturnType<typeof useTrackingStore.getState>["entries"],
+) {
+  const now = Date.now();
+
+  return entries
+    .filter((entry) => entry.type === "milk" && entry.nextFeedAt)
+    .map((entry) => ({
+      babyId: entry.babyId,
+      nextFeedAt: entry.nextFeedAt!,
+    }))
+    .filter((entry) => new Date(entry.nextFeedAt).getTime() > now)
+    .sort(
+      (a, b) =>
+        new Date(a.nextFeedAt).getTime() - new Date(b.nextFeedAt).getTime(),
+    )[0];
+}
+
 export default function SmartReminderCard() {
   const entries = useTrackingStore((state) => state.entries);
+  const nextFeed = getNextFeed(entries);
+  const nextFeedBaby = nextFeed
+    ? babies.find((baby) => baby.id === nextFeed.babyId)
+    : undefined;
+
+  if (nextFeed && nextFeedBaby) {
+    return (
+      <section className="rounded-4xl bg-white p-4 shadow-sm ring-1 ring-pink-100">
+        <div className="flex items-start gap-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-xl ring-1 ring-pink-100">
+            🍼
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-pink-400">
+                Smart Reminder
+              </p>
+              <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-black text-violet-600 ring-1 ring-violet-100">
+                Đã hẹn bú
+              </span>
+            </div>
+
+            <h3 className="mt-1 font-black text-slate-950">
+              Cữ bú tiếp theo của {nextFeedBaby.name}
+            </h3>
+
+            <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
+              Dự kiến nhắc lại lúc{" "}
+              <span className="font-black text-pink-500">
+                {formatTime(nextFeed.nextFeedAt)}
+              </span>
+              . Nếu đã cho bé bú sớm hơn, mẹ ghi cữ mới để cập nhật nhắc lại.
+            </p>
+
+            <Link
+              href={getReminderHref("milk", nextFeedBaby.id)}
+              className="mt-3 inline-flex rounded-full bg-pink-500 px-4 py-2 text-xs font-black text-white shadow-sm shadow-pink-200 transition active:scale-[0.98]"
+            >
+              Ghi cữ bú →
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const reminderResult = getSmartReminderResult({
     entries,

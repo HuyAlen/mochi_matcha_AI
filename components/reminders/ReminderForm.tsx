@@ -1,110 +1,188 @@
 "use client";
 
-import { useState } from "react";
-import { useReminderStore } from "@/src/store/reminderStore";
-import type { ReminderCategory } from "@/types/reminder";
+import { useMemo, useState } from "react";
+import type {
+  BabyId,
+  Reminder,
+  ReminderRepeat,
+  ReminderType,
+} from "@/types/reminder";
+import {
+  createReminder,
+  getDefaultIntervalMinutes,
+  getDefaultReminderTitle,
+  upsertReminder,
+} from "@/lib/reminders/reminderEngine";
+import { scheduleReminderNotification } from "@/lib/pwa/reminderNotification";
+import ReminderTypePicker from "@/components/reminders/ReminderTypePicker";
 
-export default function ReminderForm() {
-  const [open, setOpen] = useState(false);
+type ReminderFormProps = {
+  onSaved?: (reminder: Reminder) => void;
+};
 
-  const addReminder = useReminderStore(
-    (state: {
-      addReminder: (reminder: {
-        category: ReminderCategory;
-        title: string;
-        scheduleText: string;
-        time?: string;
-        enabled: boolean;
-      }) => void;
-    }) => state.addReminder,
+function toDatetimeLocalValue(date: Date) {
+  const timezoneOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+}
+
+export default function ReminderForm({ onSaved }: ReminderFormProps) {
+  const defaultTime = useMemo(() => {
+    const date = new Date();
+    date.setMinutes(date.getMinutes() + 30);
+    return toDatetimeLocalValue(date);
+  }, []);
+
+  const [type, setType] = useState<ReminderType>("feed");
+  const [babyId, setBabyId] = useState<BabyId | "both">("both");
+  const [title, setTitle] = useState(getDefaultReminderTitle("feed"));
+  const [note, setNote] = useState("");
+  const [remindAt, setRemindAt] = useState(defaultTime);
+  const [repeat, setRepeat] = useState<ReminderRepeat>("none");
+  const [intervalMinutes, setIntervalMinutes] = useState(
+    getDefaultIntervalMinutes("feed"),
   );
+  const [isSaving, setIsSaving] = useState(false);
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="w-full rounded-2xl bg-pink-500 py-4 text-sm font-black text-white shadow-sm"
-      >
-        + Thêm nhắc nhở
-      </button>
-    );
+  function handleTypeChange(nextType: ReminderType) {
+    setType(nextType);
+    setTitle(getDefaultReminderTitle(nextType));
+    setIntervalMinutes(getDefaultIntervalMinutes(nextType));
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSaving(true);
+
+    try {
+      const reminder = createReminder({
+        babyId,
+        type,
+        title,
+        note,
+        remindAt: new Date(remindAt).toISOString(),
+        repeat,
+        intervalMinutes,
+      });
+
+      const savedReminder = upsertReminder(reminder);
+
+      await scheduleReminderNotification({
+        id: savedReminder.id,
+        title: savedReminder.title,
+        body: savedReminder.note || "Đến giờ chăm sóc bé.",
+        remindAt: savedReminder.remindAt,
+        url: "/reminders",
+      });
+
+      onSaved?.(savedReminder);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
     <form
-      className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-pink-100"
-      onSubmit={(event) => {
-        event.preventDefault();
-
-        const form = event.currentTarget;
-        const title = (form.elements.namedItem("title") as HTMLInputElement)
-          .value;
-        const category = (
-          form.elements.namedItem("category") as HTMLSelectElement
-        ).value as ReminderCategory;
-        const time = (form.elements.namedItem("time") as HTMLInputElement)
-          .value;
-
-        if (!title.trim()) return;
-
-        addReminder({
-          category,
-          title: title.trim(),
-          scheduleText: time ? `Hằng ngày ${time}` : "Hằng ngày",
-          time,
-          enabled: true,
-        });
-
-        form.reset();
-        setOpen(false);
-      }}
+      onSubmit={handleSubmit}
+      className="space-y-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm"
     >
-      <div className="flex items-center justify-between">
-        <h3 className="font-black text-slate-950">Thêm nhắc nhở</h3>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-sm font-bold text-slate-400"
-        >
-          Đóng
-        </button>
+      <div>
+        <p className="text-lg font-bold text-slate-950">Tạo hẹn nhắc</p>
+        <p className="mt-1 text-sm text-slate-500">
+          Feed, Sleep, Pump, Medicine hoặc Custom reminder.
+        </p>
       </div>
 
-      <div className="mt-4 space-y-3">
-        <input
-          name="title"
-          placeholder="Tên nhắc nhở"
-          className="w-full rounded-2xl bg-slate-50 px-4 py-3 text-sm outline-none placeholder:text-slate-400"
-        />
+      <ReminderTypePicker value={type} onChange={handleTypeChange} />
 
-        <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="space-y-1">
+          <span className="text-sm font-semibold text-slate-700">Bé</span>
           <select
-            name="category"
-            defaultValue="milk"
-            className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600 outline-none"
+            value={babyId}
+            onChange={(event) =>
+              setBabyId(event.target.value as BabyId | "both")
+            }
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-300"
           >
-            <option value="milk">Sữa</option>
-            <option value="sleep">Ngủ</option>
-            <option value="diaper">Tã</option>
-            <option value="meal">Ăn dặm</option>
-            <option value="medicine">Thuốc</option>
-            <option value="vaccine">Vaccine</option>
+            <option value="both">Cả hai bé</option>
+            <option value="mochi">Mochi</option>
+            <option value="matcha">Matcha</option>
           </select>
+        </label>
 
+        <label className="space-y-1">
+          <span className="text-sm font-semibold text-slate-700">Giờ nhắc</span>
           <input
-            name="time"
-            type="time"
-            className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600 outline-none"
+            type="datetime-local"
+            value={remindAt}
+            onChange={(event) => setRemindAt(event.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-300"
+            required
           />
-        </div>
+        </label>
+      </div>
+
+      <label className="space-y-1 block">
+        <span className="text-sm font-semibold text-slate-700">Tiêu đề</span>
+        <input
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-300"
+          placeholder="VD: Đến giờ bú sữa"
+          required
+        />
+      </label>
+
+      <label className="space-y-1 block">
+        <span className="text-sm font-semibold text-slate-700">Ghi chú</span>
+        <textarea
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          className="min-h-20 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-300"
+          placeholder="VD: 120ml, bên trái, sau ăn..."
+        />
+      </label>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="space-y-1">
+          <span className="text-sm font-semibold text-slate-700">Lặp lại</span>
+          <select
+            value={repeat}
+            onChange={(event) =>
+              setRepeat(event.target.value as ReminderRepeat)
+            }
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-300"
+          >
+            <option value="none">Không lặp</option>
+            <option value="daily">Mỗi ngày</option>
+            <option value="interval">Theo khoảng thời gian</option>
+          </select>
+        </label>
+
+        {repeat === "interval" ? (
+          <label className="space-y-1">
+            <span className="text-sm font-semibold text-slate-700">
+              Khoảng cách phút
+            </span>
+            <input
+              type="number"
+              min={5}
+              value={intervalMinutes}
+              onChange={(event) =>
+                setIntervalMinutes(Number(event.target.value))
+              }
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-300"
+            />
+          </label>
+        ) : null}
       </div>
 
       <button
         type="submit"
-        className="mt-4 w-full rounded-2xl bg-pink-500 py-3 text-sm font-black text-white"
+        disabled={isSaving}
+        className="w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-sm disabled:opacity-50"
       >
-        Lưu nhắc nhở
+        {isSaving ? "Đang lưu..." : "Lưu hẹn nhắc"}
       </button>
     </form>
   );

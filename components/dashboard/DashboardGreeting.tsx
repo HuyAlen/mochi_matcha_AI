@@ -1,5 +1,3 @@
-import { babies } from "@/src/store/babyStore";
-
 function getGreeting() {
   const hour = new Date().getHours();
 
@@ -7,7 +5,7 @@ function getGreeting() {
     return {
       label: "Chào buổi sáng",
       icon: "☀️",
-      message: "Mẹ cùng bắt đầu một ngày chăm sóc nhẹ nhàng nhé.",
+      message: "Bắt đầu ngày mới nhẹ nhàng cùng Mochi và Matcha.",
     };
   }
 
@@ -26,54 +24,24 @@ function getGreeting() {
   };
 }
 
-function getAgeLabel(birthDate?: string) {
-  if (!birthDate) return "Chưa cập nhật tuổi";
-
-  const birth = new Date(birthDate);
-  const now = new Date();
-
-  if (Number.isNaN(birth.getTime())) return "Chưa cập nhật tuổi";
-
-  let months =
-    (now.getFullYear() - birth.getFullYear()) * 12 +
-    now.getMonth() -
-    birth.getMonth();
-
-  let days = now.getDate() - birth.getDate();
-
-  if (days < 0) {
-    months -= 1;
-    const previousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-    days += previousMonth.getDate();
-  }
-
-  if (months <= 0) return `${Math.max(days, 0)} ngày`;
-  if (months < 12) return `${months} tháng ${Math.max(days, 0)} ngày`;
-
-  const years = Math.floor(months / 12);
-  const remainingMonths = months % 12;
-
-  if (remainingMonths === 0) return `${years} tuổi`;
-
-  return `${years} tuổi ${remainingMonths} tháng`;
-}
-
 export default function DashboardGreeting() {
   const greeting = getGreeting();
-  const ageLabel = getAgeLabel(babies[0]?.birthDate);
 
   return (
-    <section className="rounded-[1.75rem] bg-white p-5 shadow-sm ring-1 ring-slate-100">
-      <div className="min-w-0">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-pink-400">
+    <section className="relative overflow-hidden rounded-[1.75rem] border border-pink-100 bg-white px-5 py-6 shadow-[0_18px_45px_rgba(244,114,182,0.10)]">
+      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-pink-100/60 blur-2xl" />
+      <div className="absolute -bottom-12 left-8 h-24 w-24 rounded-full bg-violet-100/60 blur-2xl" />
+
+      <div className="relative">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-pink-400">
           {greeting.icon} {greeting.label}
         </p>
 
-        <h2 className="mt-1 text-2xl font-black leading-tight tracking-tight text-slate-950">
+        <h2 className="mt-2 max-w-[300px] text-[1.7rem] font-black leading-[1.12] tracking-tight text-slate-950">
           Hôm nay của hai bé
         </h2>
 
-        <p className="mt-2 text-sm leading-6 text-slate-500">
+        <p className="mt-4 max-w-[310px] text-sm font-semibold leading-6 text-slate-500">
           {greeting.message}
         </p>
       </div>

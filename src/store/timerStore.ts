@@ -10,6 +10,10 @@ export interface ActiveTimerSession {
   babyId: BabyId;
   kind: TimerKind;
   startAt: string;
+
+  amount?: string;
+  note?: string;
+  remindAfterMinutes?: number | null;
 }
 
 type TimerSessionsByBaby = Partial<Record<BabyId, ActiveTimerSession>>;
@@ -23,7 +27,15 @@ interface TimerState {
   cancelSleepTimer: (babyId: BabyId) => void;
   getActiveSleepSession: (babyId: BabyId) => ActiveTimerSession | undefined;
 
-  startMilkTimer: (babyId: BabyId, startAt?: string) => void;
+  startMilkTimer: (
+    babyId: BabyId,
+    startAt?: string,
+    draft?: Partial<ActiveTimerSession>,
+  ) => void;
+  updateMilkTimerDraft: (
+    babyId: BabyId,
+    draft: Partial<ActiveTimerSession>,
+  ) => void;
   stopMilkTimer: (babyId: BabyId) => ActiveTimerSession | undefined;
   cancelMilkTimer: (babyId: BabyId) => void;
   getActiveMilkSession: (babyId: BabyId) => ActiveTimerSession | undefined;
@@ -127,7 +139,7 @@ export const useTimerStore = create<TimerState>()(
 
       getActiveSleepSession: (babyId) => get().activeSleepSessions[babyId],
 
-      startMilkTimer: (babyId, startAt) =>
+      startMilkTimer: (babyId, startAt, draft) =>
         set((state) => ({
           activeMilkSessions: {
             ...state.activeMilkSessions,
@@ -135,9 +147,29 @@ export const useTimerStore = create<TimerState>()(
               babyId,
               kind: "milk",
               startAt: startAt ?? new Date().toISOString(),
+              ...draft,
             },
           },
         })),
+
+      updateMilkTimerDraft: (babyId, draft) =>
+        set((state) => {
+          const current = state.activeMilkSessions[babyId];
+
+          if (!current) {
+            return state;
+          }
+
+          return {
+            activeMilkSessions: {
+              ...state.activeMilkSessions,
+              [babyId]: {
+                ...current,
+                ...draft,
+              },
+            },
+          };
+        }),
 
       stopMilkTimer: (babyId) => {
         const session = get().activeMilkSessions[babyId];
@@ -168,7 +200,7 @@ export const useTimerStore = create<TimerState>()(
     }),
     {
       name: "mind-ai-timer-store-v2",
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => localStorage),
       migrate: (persistedState) => {
         const state = persistedState as Partial<TimerState>;

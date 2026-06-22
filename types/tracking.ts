@@ -17,10 +17,22 @@ export interface TrackingEntry {
   unit: string;
   note?: string;
   createdAt: string;
+
+  /**
+   * Milk tracking pro
+   * durationMinutes: bé bú trong bao lâu
+   * remindAfterMinutes: nhắc bú lại sau bao lâu
+   * nextFeedAt: thời điểm dự kiến cữ bú tiếp theo
+   */
+  durationMinutes?: number;
+  remindAfterMinutes?: number;
+  nextFeedAt?: string;
 }
 
 export interface TrackingTodaySummary {
   milkMl: number;
+  milkDurationMinutes: number;
+  nextFeedAt?: string;
   sleepHours: number;
   meals: number;
   diapers: number;

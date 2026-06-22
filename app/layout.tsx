@@ -5,6 +5,7 @@ import "./globals.css";
 
 import AuthProvider from "@/components/auth/AuthProvider";
 import SyncProvider from "@/components/sync/SyncProvider";
+import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],

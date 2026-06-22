@@ -64,6 +64,9 @@ const demoEntries: TrackingEntry[] = [
     value: 120,
     unit: "ml",
     note: "Bé bú tốt",
+    durationMinutes: 12,
+    remindAfterMinutes: 180,
+    nextFeedAt: "2026-06-20T18:00:00.000Z",
     createdAt: DEMO_CREATED_AT,
   },
   {
@@ -82,6 +85,9 @@ const demoEntries: TrackingEntry[] = [
     value: 90,
     unit: "ml",
     note: "Bú bình",
+    durationMinutes: 10,
+    remindAfterMinutes: 180,
+    nextFeedAt: "2026-06-20T18:00:00.000Z",
     createdAt: DEMO_CREATED_AT,
   },
   {
@@ -101,23 +107,39 @@ function sortNewestFirst(entries: TrackingEntry[]) {
   );
 }
 
+function getNearestFutureFeed(entries: TrackingEntry[]) {
+  const now = Date.now();
+
+  return entries
+    .filter((entry) => entry.type === "milk" && entry.nextFeedAt)
+    .map((entry) => entry.nextFeedAt!)
+    .filter((nextFeedAt) => new Date(nextFeedAt).getTime() > now)
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0];
+}
+
 function summarize(entries: TrackingEntry[]): TrackingTodaySummary {
-  return entries.reduce<TrackingTodaySummary>(
-    (summary, entry) => {
+  const summary = entries.reduce<TrackingTodaySummary>(
+    (current, entry) => {
       const value = Number(entry.value || 0);
 
-      if (entry.type === "milk") summary.milkMl += value;
-      if (entry.type === "sleep") summary.sleepHours += value;
-      if (entry.type === "meal") summary.meals += 1;
-      if (entry.type === "diaper") summary.diapers += value;
-      if (entry.type === "mood") summary.moodCount += 1;
-      if (entry.type === "medicine") summary.medicineCount += 1;
-      if (entry.type === "temperature") summary.temperatureLatest = value;
+      if (entry.type === "milk") {
+        current.milkMl += value;
+        current.milkDurationMinutes += Number(entry.durationMinutes || 0);
+      }
 
-      return summary;
+      if (entry.type === "sleep") current.sleepHours += value;
+      if (entry.type === "meal") current.meals += 1;
+      if (entry.type === "diaper") current.diapers += value;
+      if (entry.type === "mood") current.moodCount += 1;
+      if (entry.type === "medicine") current.medicineCount += 1;
+      if (entry.type === "temperature") current.temperatureLatest = value;
+
+      return current;
     },
     {
       milkMl: 0,
+      milkDurationMinutes: 0,
+      nextFeedAt: undefined,
       sleepHours: 0,
       meals: 0,
       diapers: 0,
@@ -126,6 +148,10 @@ function summarize(entries: TrackingEntry[]): TrackingTodaySummary {
       temperatureLatest: undefined,
     },
   );
+
+  summary.nextFeedAt = getNearestFutureFeed(entries);
+
+  return summary;
 }
 
 export const useTrackingStore = create<TrackingState>()(

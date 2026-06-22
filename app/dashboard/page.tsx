@@ -12,7 +12,7 @@ import AppShell from "@/components/layout/AppShell";
 export default function DashboardPage() {
   return (
     <AppShell>
-      <section className="space-y-5 pb-6">
+      <section className="space-y-5">
         <DashboardGreeting />
 
         <DashboardLiveSessions />

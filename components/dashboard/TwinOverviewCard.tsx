@@ -1,11 +1,11 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+
 import { babies } from "@/src/store/babyStore";
 import { useTrackingStore } from "@/src/store/trackingStore";
-import type { BabyId } from "@/types/baby";
+import type { Baby, BabyId } from "@/types/baby";
 import type { TrackingEntry } from "@/types/tracking";
-import BabySummaryCard from "./BabySummaryCard";
 
 type TwinStatus = {
   label: string;
@@ -18,6 +18,12 @@ function getTotal(entries: TrackingEntry[], type: TrackingEntry["type"]) {
   return entries
     .filter((entry) => entry.type === type)
     .reduce((sum, entry) => sum + Number(entry.value ?? 0), 0);
+}
+
+function getMilkDuration(entries: TrackingEntry[]) {
+  return entries
+    .filter((entry) => entry.type === "milk")
+    .reduce((sum, entry) => sum + Number(entry.durationMinutes ?? 0), 0);
 }
 
 function buildTwinStatus(
@@ -65,62 +71,6 @@ function buildTwinStatus(
   };
 }
 
-function TwinOverviewSkeleton() {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-end justify-between gap-3 px-1">
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-            Twin Care Overview
-          </p>
-          <h3 className="mt-1 font-black text-slate-950">Tổng quan hôm nay</h3>
-        </div>
-
-        <div className="hidden rounded-2xl bg-slate-50 px-3 py-2 text-right text-xs font-black text-slate-400 ring-1 ring-slate-100 sm:block">
-          Đang tải
-        </div>
-      </div>
-
-      <div className="rounded-[1.5rem] bg-slate-50 p-3 ring-1 ring-slate-100 sm:hidden">
-        <div className="flex items-start gap-2">
-          <span className="text-lg">✨</span>
-          <div>
-            <p className="text-xs font-black text-slate-500">
-              Đang tải dữ liệu
-            </p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-400">
-              Mind AI đang đồng bộ tổng quan hôm nay.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-        {babies.map((baby) => (
-          <div
-            key={baby.id}
-            className="min-h-[156px] rounded-[28px] border border-pink-100/80 bg-white p-3.5 shadow-[0_18px_45px_rgba(244,114,182,0.10)]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 animate-pulse rounded-full bg-slate-100" />
-              <div className="min-w-0 flex-1">
-                <div className="h-4 w-20 animate-pulse rounded-full bg-slate-100" />
-                <div className="mt-2 h-3 w-14 animate-pulse rounded-full bg-slate-100" />
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-2">
-              <div className="h-9 animate-pulse rounded-2xl bg-slate-50" />
-              <div className="h-9 animate-pulse rounded-2xl bg-slate-50" />
-              <div className="h-9 animate-pulse rounded-2xl bg-slate-50" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function subscribeHydration() {
   return () => undefined;
 }
@@ -138,6 +88,115 @@ function useIsHydrated() {
     subscribeHydration,
     getClientHydrationSnapshot,
     getServerHydrationSnapshot,
+  );
+}
+
+function CompactBabyCard({
+  baby,
+  entries,
+}: {
+  baby: Baby;
+  entries: TrackingEntry[];
+}) {
+  const milk = getTotal(entries, "milk");
+  const milkDuration = getMilkDuration(entries);
+  const sleep = getTotal(entries, "sleep");
+  const meals = entries.filter((entry) => entry.type === "meal").length;
+
+  return (
+    <div className="rounded-[1.45rem] border border-pink-100/80 bg-white p-3 shadow-[0_14px_34px_rgba(244,114,182,0.10)]">
+      <div className="flex items-center gap-2.5">
+        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-pink-50 ring-2 ring-white">
+          {baby.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={baby.avatarUrl}
+              alt={baby.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-lg">
+              👶
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span
+              className={[
+                "h-2 w-2 rounded-full",
+                baby.id === "mochi" ? "bg-pink-500" : "bg-violet-500",
+              ].join(" ")}
+            />
+            <p className="truncate text-sm font-black text-slate-950">
+              {baby.name}
+            </p>
+          </div>
+
+          <p
+            className={[
+              "mt-0.5 text-xs font-black",
+              baby.id === "mochi" ? "text-pink-500" : "text-violet-500",
+            ].join(" ")}
+          >
+            Hôm nay
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-1.5">
+        <div className="rounded-2xl bg-slate-50 px-1.5 py-2 text-center">
+          <p className="text-sm">🍼</p>
+          <p className="mt-1 text-xs font-black text-slate-950">{milk}ml</p>
+          <p className="mt-0.5 text-[10px] font-bold text-slate-400">
+            {milkDuration > 0 ? `${milkDuration} phút` : "Sữa"}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 px-1.5 py-2 text-center">
+          <p className="text-sm">🌙</p>
+          <p className="mt-1 text-xs font-black text-slate-950">{sleep}h</p>
+          <p className="mt-0.5 text-[10px] font-bold text-slate-400">Ngủ</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 px-1.5 py-2 text-center">
+          <p className="text-sm">🥣</p>
+          <p className="mt-1 text-xs font-black text-slate-950">{meals}</p>
+          <p className="mt-0.5 text-[10px] font-bold text-slate-400">Ăn dặm</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TwinOverviewSkeleton() {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-end justify-between gap-3 px-1">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+            Twin Care
+          </p>
+          <h3 className="mt-1 text-lg font-black text-slate-950">
+            Tổng quan hôm nay
+          </h3>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-400 ring-1 ring-slate-100">
+          Đang tải
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {babies.map((baby) => (
+          <div
+            key={baby.id}
+            className="h-[142px] animate-pulse rounded-[1.5rem] bg-white ring-1 ring-pink-100"
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -161,36 +220,24 @@ export default function TwinOverviewCard() {
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3 px-1">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-            Twin Care Overview
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+            Twin Care
           </p>
-          <h3 className="mt-1 font-black text-slate-950">Tổng quan hôm nay</h3>
+          <h3 className="mt-1 text-lg font-black leading-tight text-slate-950">
+            Tổng quan hôm nay
+          </h3>
         </div>
 
         <div
-          className={`hidden rounded-2xl px-3 py-2 text-right text-xs font-black ring-1 sm:block ${status.tone}`}
+          className={`shrink-0 rounded-2xl px-3 py-2 text-xs font-black ring-1 ${status.tone}`}
         >
-          <div>
-            {status.icon} {status.label}
-          </div>
+          {status.icon} {status.label}
         </div>
       </div>
 
-      <div className={`rounded-[1.5rem] p-3 ring-1 sm:hidden ${status.tone}`}>
-        <div className="flex items-start gap-2">
-          <span className="text-lg">{status.icon}</span>
-          <div>
-            <p className="text-xs font-black">{status.label}</p>
-            <p className="mt-0.5 text-xs font-semibold opacity-80">
-              {status.description}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {babies.map((baby) => (
-          <BabySummaryCard
+          <CompactBabyCard
             key={baby.id}
             baby={baby}
             entries={getTodayEntries(baby.id as BabyId)}
