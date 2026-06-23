@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { Baby, BabyId } from "@/types/baby";
+import { queuePushItems } from "@/lib/supabase/sync";
 
 export const babies: Baby[] = [
   {
@@ -90,6 +91,16 @@ export function normalizeBabyProfiles(
   });
 }
 
+function canRunSupabaseSync() {
+  return typeof window !== "undefined" && navigator.onLine;
+}
+
+function syncBabyProfiles(profiles: Baby[]) {
+  if (!canRunSupabaseSync()) return;
+
+  queuePushItems("baby_profiles", profiles);
+}
+
 type BabyStore = {
   babyProfiles: Baby[];
   selectedBabyId: BabyId;
@@ -113,24 +124,32 @@ export const useBabyStore = create<BabyStore>()(
       setSelectedBabyId: (id) => set({ selectedBabyId: id }),
 
       updateBabyProfile: (id, data) =>
-        set((state) => ({
-          babyProfiles: normalizeBabyProfiles(
+        set((state) => {
+          const nextProfiles = normalizeBabyProfiles(
             state.babyProfiles.map((baby) =>
               baby.id === id ? { ...baby, ...data, id } : baby,
             ),
-          ),
-        })),
+          );
 
-      resetBabyProfiles: () =>
+          syncBabyProfiles(nextProfiles);
+
+          return { babyProfiles: nextProfiles };
+        }),
+
+      resetBabyProfiles: () => {
         set({
           babyProfiles: babies,
           selectedBabyId: "mochi",
-        }),
+        });
+        syncBabyProfiles(babies);
+      },
 
-      replaceBabyProfiles: (profiles) =>
-        set({
-          babyProfiles: normalizeBabyProfiles(profiles),
-        }),
+      replaceBabyProfiles: (profiles) => {
+        const nextProfiles = normalizeBabyProfiles(profiles);
+
+        set({ babyProfiles: nextProfiles });
+        syncBabyProfiles(nextProfiles);
+      },
     }),
     {
       name: "mind-ai-baby-profiles",

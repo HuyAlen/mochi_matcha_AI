@@ -8,6 +8,7 @@ import type {
   TrackingTodaySummary,
   TrackingType,
 } from "@/types/tracking";
+import { deleteItem, queuePushItems } from "@/lib/supabase/sync";
 
 export type TrackingLog = TrackingEntry;
 
@@ -117,6 +118,24 @@ function getNearestFutureFeed(entries: TrackingEntry[]) {
     .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0];
 }
 
+function canRunSupabaseSync() {
+  return typeof window !== "undefined" && navigator.onLine;
+}
+
+function syncTrackingEntries(entries: TrackingEntry[]) {
+  if (!canRunSupabaseSync()) return;
+
+  queuePushItems("tracking_entries", entries);
+}
+
+function deleteTrackingEntryFromSupabase(entryId: string) {
+  if (!canRunSupabaseSync()) return;
+
+  void deleteItem("tracking_entries", entryId).catch((error) => {
+    console.warn("[Mind AI] Tracking Supabase delete sync failed", error);
+  });
+}
+
 function summarize(entries: TrackingEntry[]): TrackingTodaySummary {
   const summary = entries.reduce<TrackingTodaySummary>(
     (current, entry) => {
@@ -160,58 +179,82 @@ export const useTrackingStore = create<TrackingState>()(
       entries: demoEntries,
 
       addEntry: (entry) =>
-        set((state) => ({
-          entries: [
+        set((state) => {
+          const nextEntries = [
             {
               ...entry,
               id: createEntryId(),
               createdAt: new Date().toISOString(),
             },
             ...state.entries,
-          ],
-        })),
+          ];
+
+          syncTrackingEntries(nextEntries);
+
+          return { entries: nextEntries };
+        }),
 
       updateEntry: (entryId, payload) =>
-        set((state) => ({
-          entries: state.entries.map((entry) =>
-            entry.id === entryId ? { ...entry, ...payload } : entry,
-          ),
-        })),
+        set((state) => {
+          const nextEntries = state.entries.map((entry) =>
+            entry.id === entryId
+              ? { ...entry, ...payload, updatedAt: new Date().toISOString() }
+              : entry,
+          );
+
+          syncTrackingEntries(nextEntries);
+
+          return { entries: nextEntries };
+        }),
 
       duplicateEntry: (entryId) =>
         set((state) => {
           const source = state.entries.find((entry) => entry.id === entryId);
           if (!source) return state;
 
-          return {
-            entries: [
-              {
-                ...source,
-                id: createEntryId(),
-                createdAt: new Date().toISOString(),
-                note: source.note ? `${source.note} · Sao chép` : "Sao chép",
-              },
-              ...state.entries,
-            ],
-          };
+          const nextEntries = [
+            {
+              ...source,
+              id: createEntryId(),
+              createdAt: new Date().toISOString(),
+              note: source.note ? `${source.note} · Sao chép` : "Sao chép",
+            },
+            ...state.entries,
+          ];
+
+          syncTrackingEntries(nextEntries);
+
+          return { entries: nextEntries };
         }),
 
       deleteEntry: (entryId) =>
-        set((state) => ({
-          entries: state.entries.filter((entry) => entry.id !== entryId),
-        })),
+        set((state) => {
+          const nextEntries = state.entries.filter(
+            (entry) => entry.id !== entryId,
+          );
+
+          deleteTrackingEntryFromSupabase(entryId);
+
+          return { entries: nextEntries };
+        }),
 
       clearDemoEntries: () =>
-        set((state) => ({
-          entries: state.entries.filter(
+        set((state) => {
+          const nextEntries = state.entries.filter(
             (entry) => !entry.id.startsWith("demo-"),
-          ),
-        })),
+          );
 
-      replaceEntries: (entries) =>
-        set({
-          entries: sortNewestFirst(entries),
+          syncTrackingEntries(nextEntries);
+
+          return { entries: nextEntries };
         }),
+
+      replaceEntries: (entries) => {
+        const nextEntries = sortNewestFirst(entries);
+
+        set({ entries: nextEntries });
+        syncTrackingEntries(nextEntries);
+      },
 
       getTodayEntries: (babyId) => {
         return sortNewestFirst(

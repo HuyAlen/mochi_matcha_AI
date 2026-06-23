@@ -259,6 +259,88 @@ function AIInsightMini({ entries }: { entries: TrackingEntry[] }) {
   );
 }
 
+function QuickAddChooser({
+  babies,
+  selectedBabyId,
+  onBabyChange,
+  onSelect,
+  onClose,
+}: {
+  babies: {
+    id: BabyId;
+    name?: string;
+    nickname?: string;
+    avatarEmoji?: string;
+  }[];
+  selectedBabyId: BabyId;
+  onBabyChange: (babyId: BabyId) => void;
+  onSelect: (type: TrackingType) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-slate-950/25 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm">
+      <button
+        type="button"
+        aria-label="Đóng chọn nhanh"
+        className="absolute inset-0 cursor-default"
+        onClick={onClose}
+      />
+
+      <section className="relative w-full max-w-[430px] rounded-[2rem] bg-white p-5 shadow-2xl ring-1 ring-pink-100">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-pink-400">
+              Chọn nhanh
+            </p>
+            <h2 className="mt-1 text-xl font-black text-slate-950">
+              Ghi nhận chăm bé
+            </h2>
+            <p className="mt-1 text-sm font-bold text-slate-400">
+              Chọn bé và hoạt động cần ghi nhanh.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-10 items-center justify-center rounded-2xl bg-slate-50 text-lg font-black text-slate-400 ring-1 ring-slate-100 active:scale-95"
+            aria-label="Đóng"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-[1.5rem] bg-slate-50 p-1.5">
+          {babies.map((baby) => (
+            <FilterPill
+              key={baby.id}
+              active={selectedBabyId === baby.id}
+              onClick={() => onBabyChange(baby.id)}
+            >
+              {getBabyAvatar(baby)} {getBabyDisplayName(baby)}
+            </FilterPill>
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          {quickTypes.map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onSelect(type)}
+              className="rounded-3xl bg-slate-50 px-3 py-4 text-center ring-1 ring-slate-100 transition active:scale-[0.98]"
+            >
+              <div className="text-2xl">{getTrackingIcon(type)}</div>
+              <p className="mt-2 text-xs font-black text-slate-700">
+                {getTrackingLabel(type)}
+              </p>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function TrackingPageContent() {
   const router = useRouter();
   const pathname = usePathname();
@@ -274,6 +356,7 @@ function TrackingPageContent() {
   const [selectedBabyId, setSelectedBabyId] = useState<BabyId>("mochi");
   const [selectedType, setSelectedType] = useState<TrackingType | null>(null);
   const [editingEntry, setEditingEntry] = useState<TrackingEntry | null>(null);
+  const [quickChooserOpen, setQuickChooserOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const babyProfiles = useBabyStore((state) => state.babyProfiles);
@@ -303,6 +386,23 @@ function TrackingPageContent() {
     params.delete("babyId");
     const nextQuery = params.toString();
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    });
+  }
+
+  function openQuickChooser() {
+    setEditingEntry(null);
+    setSelectedType(null);
+    setQuickChooserOpen(true);
+  }
+
+  function openQuickSheet(type: TrackingType) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("quick", type);
+    params.set("baby", selectedBabyId);
+    params.set("babyId", selectedBabyId);
+    setQuickChooserOpen(false);
+    router.replace(`${pathname}?${params.toString()}`, {
       scroll: false,
     });
   }
@@ -367,7 +467,7 @@ function TrackingPageContent() {
   }
 
   return (
-    <AppShell>
+    <AppShell onQuickAdd={openQuickChooser}>
       <Toast toast={toast} />
 
       <section className="space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
@@ -476,6 +576,16 @@ function TrackingPageContent() {
           onDuplicate={handleDuplicate}
         />
       </section>
+
+      {quickChooserOpen && !quickType && !editingEntry ? (
+        <QuickAddChooser
+          babies={babyProfiles}
+          selectedBabyId={selectedBabyId}
+          onBabyChange={setSelectedBabyId}
+          onSelect={openQuickSheet}
+          onClose={() => setQuickChooserOpen(false)}
+        />
+      ) : null}
 
       {quickType && !editingEntry ? (
         <ActivitySheetRouter

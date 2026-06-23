@@ -3,10 +3,17 @@
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
+import QuickAddSheet from "@/components/dashboard/quick-add/QuickAddSheet";
 import BottomNav from "@/components/layout/BottomNav";
 
 type AppShellProps = {
   children: ReactNode;
+  /**
+   * Deprecated: BottomNav now opens the shared QuickAddSheet globally via
+   * the `mind-ai:open-quick-add` event, so page-level quick add handlers are
+   * intentionally ignored to keep every page using the same popup.
+   */
+  onQuickAdd?: () => void;
 };
 
 export default function AppShell({ children }: AppShellProps) {
@@ -42,6 +49,7 @@ export default function AppShell({ children }: AppShellProps) {
         </main>
 
         <BottomNav />
+        <QuickAddSheet />
       </div>
     </div>
   );
