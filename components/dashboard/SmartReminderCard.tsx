@@ -8,7 +8,7 @@ import {
   getSmartReminderResult,
   summarizeReminderPriorities,
   type SmartReminder,
-} from "@/services/reminders/reminderEngine";
+} from "@/services/reminders/smartReminderEngine";
 
 function getReminderHref(quickType: string, babyId: string) {
   const params = new URLSearchParams({

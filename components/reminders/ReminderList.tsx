@@ -9,7 +9,7 @@ import {
   formatReminderDateTime,
   loadReminders,
   updateReminderStatus,
-} from "@/lib/reminders/reminderEngine";
+} from "@/services/reminders/reminderCrud";
 
 type ReminderListProps = {
   limit?: number;

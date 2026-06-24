@@ -12,7 +12,7 @@ import {
   getDefaultIntervalMinutes,
   getDefaultReminderTitle,
   upsertReminder,
-} from "@/lib/reminders/reminderEngine";
+} from "@/services/reminders/reminderCrud";
 import { scheduleReminderNotification } from "@/lib/pwa/reminderNotification";
 import ReminderTypePicker from "@/components/reminders/ReminderTypePicker";
 
