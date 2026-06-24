@@ -4,7 +4,8 @@ export type SyncTable =
   | "baby_profiles"
   | "tracking_entries"
   | "vaccine_records"
-  | "vaccine_reactions";
+  | "vaccine_reactions"
+  | "reminders";
 
 type SyncableItem = {
   id: string;

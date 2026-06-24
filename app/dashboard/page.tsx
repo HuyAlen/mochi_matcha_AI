@@ -3,11 +3,11 @@ import DashboardGreeting from "@/components/dashboard/DashboardGreeting";
 import DashboardLiveSessions from "@/components/dashboard/DashboardLiveSessions";
 import GrowthSnapshotCard from "@/components/dashboard/GrowthSnapshotCard";
 import HealthSnapshotCard from "@/components/dashboard/HealthSnapshotCard";
-import QuickAddSheet from "@/components/dashboard/quick-add/QuickAddSheet";
 import RecentActivityCard from "@/components/dashboard/RecentActivityCard";
 import SmartReminderCard from "@/components/dashboard/SmartReminderCard";
 import TwinOverviewCard from "@/components/dashboard/TwinOverviewCard";
 import AppShell from "@/components/layout/AppShell";
+import UpcomingReminderCard from "@/components/dashboard/UpcomingReminderCard";
 
 export default function DashboardPage() {
   return (
@@ -28,9 +28,9 @@ export default function DashboardPage() {
         <HealthSnapshotCard />
 
         <RecentActivityCard />
-      </section>
 
-      <QuickAddSheet />
+        <UpcomingReminderCard />
+      </section>
     </AppShell>
   );
 }

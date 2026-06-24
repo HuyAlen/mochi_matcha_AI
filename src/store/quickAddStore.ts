@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 
-export type QuickAddType = "milk" | "sleep" | "meal" | "diaper";
+export type QuickAddType = "milk" | "sleep" | "meal" | "diaper" | "reminder";
 
 export type QuickAddToastType = "success" | "error";
 

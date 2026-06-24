@@ -2,7 +2,8 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { reminderTemplates } from "@/src/data/reminders/reminderTemplates";
+import { reminderTemplates } from "@/data/reminders/reminderTemplates";
+import { deleteItem, pullItems, queuePushItems } from "@/lib/supabase/sync";
 import type { Reminder } from "@/types/reminder";
 
 interface ReminderState {
@@ -22,50 +23,88 @@ function createReminderId() {
   return `reminder-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function withUpdatedAt(reminder: Reminder): Reminder {
+  return {
+    ...reminder,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function queueReminderSync(reminders: Reminder[]) {
+  queuePushItems("reminders", reminders);
+}
+
 export const useReminderStore = create<ReminderState>()(
   persist(
     (set) => ({
       reminders: reminderTemplates,
 
       toggleReminder: (id) =>
-        set((state) => ({
-          reminders: state.reminders.map((reminder) =>
+        set((state) => {
+          const reminders = state.reminders.map((reminder) =>
             reminder.id === id
-              ? { ...reminder, enabled: !reminder.enabled }
+              ? withUpdatedAt({ ...reminder, enabled: !reminder.enabled })
               : reminder,
-          ),
-        })),
+          );
+
+          queueReminderSync(reminders);
+
+          return { reminders };
+        }),
 
       toggleAll: (enabled) =>
-        set((state) => ({
-          reminders: state.reminders.map((reminder) => ({
+        set((state) => {
+          const updatedAt = new Date().toISOString();
+          const reminders = state.reminders.map((reminder) => ({
             ...reminder,
             enabled,
-          })),
-        })),
+            updatedAt,
+          }));
+
+          queueReminderSync(reminders);
+
+          return { reminders };
+        }),
 
       addReminder: (reminder) =>
-        set((state) => ({
-          reminders: [
-            ...state.reminders,
-            {
-              ...reminder,
-              id: createReminderId(),
-            },
-          ],
-        })),
+        set((state) => {
+          const savedReminder: Reminder = {
+            ...reminder,
+            id: createReminderId(),
+            updatedAt: reminder.updatedAt || new Date().toISOString(),
+          };
+
+          const reminders = [...state.reminders, savedReminder];
+
+          queueReminderSync(reminders);
+
+          return { reminders };
+        }),
 
       updateReminder: (id, reminder) =>
-        set((state) => ({
-          reminders: state.reminders.map((item) =>
-            item.id === id ? { ...item, ...reminder } : item,
-          ),
-        })),
+        set((state) => {
+          const reminders = state.reminders.map((item) =>
+            item.id === id ? withUpdatedAt({ ...item, ...reminder }) : item,
+          );
+
+          queueReminderSync(reminders);
+
+          return { reminders };
+        }),
 
       deleteReminder: (id) =>
-        set((state) => ({
-          reminders: state.reminders.filter((reminder) => reminder.id !== id),
-        })),
+        set((state) => {
+          const reminders = state.reminders.filter(
+            (reminder) => reminder.id !== id,
+          );
+
+          void deleteItem("reminders", id).catch(() => {
+            // deleteItem already updates sync status. Keep local delete offline-first.
+          });
+          queueReminderSync(reminders);
+
+          return { reminders };
+        }),
     }),
     {
       name: "mind-ai-reminder-store-v1",
@@ -74,3 +113,18 @@ export const useReminderStore = create<ReminderState>()(
     },
   ),
 );
+
+export async function syncRemindersFromCloud() {
+  try {
+    const cloudReminders = await pullItems<Reminder>("reminders");
+
+    if (!cloudReminders.length) return;
+
+    useReminderStore.setState({
+      reminders: cloudReminders,
+    });
+  } catch {
+    // Offline, not signed in, or Supabase table not ready yet.
+    // Zustand persist keeps local reminders available.
+  }
+}

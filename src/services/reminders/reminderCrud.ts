@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  cancelNativeReminder,
+  scheduleNativeReminder,
+} from "@/services/notifications/nativeLocalNotifications";
 import { useReminderStore } from "@/store/reminderStore";
 import type {
   Reminder,
@@ -83,12 +87,14 @@ export function loadReminders(): Reminder[] {
 export function upsertReminder(reminder: Reminder): Reminder {
   const now = new Date().toISOString();
 
+  const nextReminder: Reminder = {
+    ...reminder,
+    enabled: reminder.status === "active",
+    updatedAt: now,
+  };
+
   useReminderStore.setState((state) => {
     const exists = state.reminders.some((item) => item.id === reminder.id);
-    const nextReminder: Reminder = {
-      ...reminder,
-      updatedAt: now,
-    };
 
     return {
       reminders: exists
@@ -100,10 +106,14 @@ export function upsertReminder(reminder: Reminder): Reminder {
   });
 
   emitReminderChange();
-  return {
-    ...reminder,
-    updatedAt: now,
-  };
+
+  if (nextReminder.status === "active" && nextReminder.enabled) {
+    void scheduleNativeReminder(nextReminder);
+  } else {
+    void cancelNativeReminder(nextReminder.id);
+  }
+
+  return nextReminder;
 }
 
 export function updateReminderStatus(
@@ -130,12 +140,20 @@ export function updateReminderStatus(
   });
 
   emitReminderChange();
+
+  if (status === "active" && updatedReminder) {
+    void scheduleNativeReminder(updatedReminder);
+  } else {
+    void cancelNativeReminder(id);
+  }
+
   return updatedReminder;
 }
 
 export function deleteReminder(id: string) {
   useReminderStore.getState().deleteReminder(id);
   emitReminderChange();
+  void cancelNativeReminder(id);
 }
 
 export function formatReminderDateTime(value: string) {
