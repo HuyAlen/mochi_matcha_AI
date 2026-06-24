@@ -128,7 +128,7 @@ function dispatchSelectedBaby(babyId?: string) {
 }
 
 export default function QuickAddSheet() {
-  const { isOpen, modalType, toast } = useQuickAddStore();
+  const { isOpen, modalType, toast, showToast } = useQuickAddStore();
   const activeModalType = modalType as QuickAddModalType | null;
   const [isChooserOpen, setIsChooserOpen] = useState(false);
   const ignoreNextOpenRef = useRef(false);
@@ -305,7 +305,16 @@ export default function QuickAddSheet() {
                 {activeModalType === "sleep" && <SleepQuickAdd />}
                 {activeModalType === "meal" && <MealQuickAdd />}
                 {activeModalType === "diaper" && <DiaperQuickAdd />}
-                {activeModalType === "reminder" && <ReminderForm />}
+                {activeModalType === "reminder" && (
+                  <ReminderForm
+                    onSaved={() => {
+                      showToast("Đã lưu hẹn nhắc", "success");
+                      window.setTimeout(() => {
+                        handleCloseAll();
+                      }, 80);
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>

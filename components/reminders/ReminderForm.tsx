@@ -18,7 +18,6 @@ import {
   getDefaultReminderTitle,
   upsertReminder,
 } from "@/src/services/reminders/reminderCrud";
-import { scheduleReminderNotification } from "@/lib/pwa/reminderNotification";
 
 type ReminderFormProps = {
   onSaved?: (reminder: Reminder) => void;
@@ -187,32 +186,43 @@ export default function ReminderForm({ onSaved }: ReminderFormProps) {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isSaving) return;
+
     setIsSaving(true);
 
     try {
+      const remindDate = new Date(remindAt);
+
+      if (Number.isNaN(remindDate.getTime())) {
+        throw new Error("Giờ nhắc chưa hợp lệ.");
+      }
+
       const reminder = createReminder({
         babyId,
         type,
         title,
         note,
-        remindAt: new Date(remindAt).toISOString(),
+        remindAt: remindDate.toISOString(),
         repeat,
         intervalMinutes,
       });
 
       const savedReminder = upsertReminder(reminder);
 
-      await scheduleReminderNotification({
-        id: savedReminder.id,
-        title: savedReminder.title,
-        body: savedReminder.note || "Đến giờ chăm sóc bé.",
-        remindAt: savedReminder.remindAt,
-        url: "/reminders",
-      });
+      console.info("[MindAI Reminder] Saved", savedReminder);
 
-      onSaved?.(savedReminder);
-    } finally {
       setIsSaving(false);
+      onSaved?.(savedReminder);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Không thể lưu hẹn nhắc.";
+
+      console.error("[MindAI Reminder] Save failed", error);
+
+      setIsSaving(false);
+
+      window.alert(message);
     }
   }
 
