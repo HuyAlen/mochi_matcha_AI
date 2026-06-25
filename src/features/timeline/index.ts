@@ -1,2 +1,2 @@
-﻿export * from "./components/MemoryCard";
-export * from "./components/MemoryTimeline";
+﻿export { default as MemoryCard } from "./components/MemoryCard";
+export { default as MemoryTimeline } from "./components/MemoryTimeline";
