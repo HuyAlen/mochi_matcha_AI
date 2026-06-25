@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
-import QuickAddSheet from "@/components/dashboard/quick-add/QuickAddSheet";
+import { QuickAddSheet } from "@/features/dashboard";
 import BottomNav from "@/components/layout/BottomNav";
 
 type AppShellProps = {
@@ -30,7 +30,7 @@ export default function AppShell({ children }: AppShellProps) {
             aria-label="Go to dashboard"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl shadow-sm ring-1 ring-pink-100">
-              🎀
+              ðŸŽ€
             </div>
 
             <div className="min-w-0">

@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useReminderStore } from "@/src/store/reminderStore";
+import { useReminderStore } from "@/features/reminders";
 import { reminderTypeLabels } from "@/types/reminder";
 
 const STARTUP_NOW = Date.now();
@@ -49,10 +49,10 @@ export default function UpcomingReminderCard() {
             Reminder
           </p>
           <h2 className="mt-1 text-xl font-black text-slate-950">
-            Nhắc sắp tới
+            Nháº¯c sáº¯p tá»›i
           </h2>
           <p className="mt-1 text-sm font-semibold text-slate-400">
-            Cữ chăm bé tiếp theo trong ngày
+            Cá»¯ chÄƒm bÃ© tiáº¿p theo trong ngÃ y
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default function UpcomingReminderCard() {
           onClick={() => router.push("/reminders")}
           className="rounded-2xl bg-violet-50 px-3 py-2 text-sm font-black text-violet-700 active:scale-95"
         >
-          + Tạo
+          + Táº¡o
         </button>
       </div>
 
@@ -75,7 +75,7 @@ export default function UpcomingReminderCard() {
               className="flex w-full items-center gap-3 rounded-3xl bg-linear-to-br from-violet-50 to-white p-4 text-left ring-1 ring-violet-100 active:scale-[0.99]"
             >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
-                ⏰
+                â°
               </div>
 
               <div className="min-w-0 flex-1">
@@ -83,7 +83,7 @@ export default function UpcomingReminderCard() {
                   {reminder.title}
                 </p>
                 <p className="mt-1 truncate text-xs font-bold text-slate-400">
-                  {reminderTypeLabels[reminder.type]} • {reminder.babyId}
+                  {reminderTypeLabels[reminder.type]} â€¢ {reminder.babyId}
                 </p>
               </div>
 
@@ -94,19 +94,19 @@ export default function UpcomingReminderCard() {
           ))
         ) : (
           <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/40 p-5 text-center">
-            <div className="text-4xl">⏰</div>
+            <div className="text-4xl">â°</div>
             <p className="mt-3 text-sm font-black text-slate-900">
-              Chưa có reminder sắp tới
+              ChÆ°a cÃ³ reminder sáº¯p tá»›i
             </p>
             <p className="mt-1 text-xs font-semibold text-slate-400">
-              Tạo nhắc cữ sữa, ngủ hoặc thuốc cho bé.
+              Táº¡o nháº¯c cá»¯ sá»¯a, ngá»§ hoáº·c thuá»‘c cho bÃ©.
             </p>
             <button
               type="button"
               onClick={() => router.push("/reminders")}
               className="mt-4 rounded-2xl bg-violet-600 px-4 py-2 text-sm font-black text-white shadow-sm active:scale-95"
             >
-              Tạo reminder
+              Táº¡o reminder
             </button>
           </div>
         )}

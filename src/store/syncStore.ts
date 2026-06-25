@@ -3,9 +3,9 @@
 import { create } from "zustand";
 
 import { pullItems, pushItems } from "@/lib/supabase/sync";
-import { useBabyStore } from "@/store/babyStore";
-import { useTrackingStore } from "@/store/trackingStore";
-import { useVaccineStore } from "@/store/vaccineStore";
+import { useBabyStore } from "@/features/babies";
+import { useVaccineStore } from "@/features/vaccines";
+import { useTrackingStore } from "@/features/tracking/store/trackingStore";
 
 import type { Baby } from "@/types/baby";
 import type { TrackingEntry } from "@/types/tracking";

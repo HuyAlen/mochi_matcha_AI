@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { babies } from "@/src/store/babyStore";
@@ -8,7 +8,7 @@ import {
   getSmartReminderResult,
   summarizeReminderPriorities,
   type SmartReminder,
-} from "@/services/reminders/smartReminderEngine";
+} from "@/features/reminders";
 
 function getReminderHref(quickType: string, babyId: string) {
   const params = new URLSearchParams({
@@ -23,8 +23,8 @@ function getReminderHref(quickType: string, babyId: string) {
 function getCardTitle(reminders: SmartReminder[]) {
   const hasHigh = reminders.some((reminder) => reminder.priority === "high");
 
-  if (hasHigh) return "Hôm nay cần làm";
-  return "Gợi ý chăm bé";
+  if (hasHigh) return "HÃ´m nay cáº§n lÃ m";
+  return "Gá»£i Ã½ chÄƒm bÃ©";
 }
 
 function formatTime(value: string) {
@@ -64,7 +64,7 @@ export default function SmartReminderCard() {
       <section className="rounded-4xl bg-white p-4 shadow-sm ring-1 ring-pink-100">
         <div className="flex items-start gap-3">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-xl ring-1 ring-pink-100">
-            🍼
+            ðŸ¼
           </div>
 
           <div className="min-w-0 flex-1">
@@ -73,27 +73,27 @@ export default function SmartReminderCard() {
                 Smart Reminder
               </p>
               <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-black text-violet-600 ring-1 ring-violet-100">
-                Đã hẹn bú
+                ÄÃ£ háº¹n bÃº
               </span>
             </div>
 
             <h3 className="mt-1 font-black text-slate-950">
-              Cữ bú tiếp theo của {nextFeedBaby.name}
+              Cá»¯ bÃº tiáº¿p theo cá»§a {nextFeedBaby.name}
             </h3>
 
             <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
-              Dự kiến nhắc lại lúc{" "}
+              Dá»± kiáº¿n nháº¯c láº¡i lÃºc{" "}
               <span className="font-black text-pink-500">
                 {formatTime(nextFeed.nextFeedAt)}
               </span>
-              . Nếu đã cho bé bú sớm hơn, mẹ ghi cữ mới để cập nhật nhắc lại.
+              . Náº¿u Ä‘Ã£ cho bÃ© bÃº sá»›m hÆ¡n, máº¹ ghi cá»¯ má»›i Ä‘á»ƒ cáº­p nháº­t nháº¯c láº¡i.
             </p>
 
             <Link
               href={getReminderHref("milk", nextFeedBaby.id)}
               className="mt-3 inline-flex rounded-full bg-pink-500 px-4 py-2 text-xs font-black text-white shadow-sm shadow-pink-200 transition active:scale-[0.98]"
             >
-              Ghi cữ bú →
+              Ghi cá»¯ bÃº â†’
             </Link>
           </div>
         </div>
@@ -119,7 +119,7 @@ export default function SmartReminderCard() {
       <section className="rounded-4xl bg-white p-4 shadow-sm ring-1 ring-pink-100">
         <div className="flex items-start gap-3">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-xl ring-1 ring-pink-100">
-            📝
+            ðŸ“
           </div>
 
           <div className="min-w-0 flex-1">
@@ -128,23 +128,23 @@ export default function SmartReminderCard() {
                 Smart Reminder
               </p>
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-600 ring-1 ring-amber-100">
-                Cần dữ liệu
+                Cáº§n dá»¯ liá»‡u
               </span>
             </div>
 
             <h3 className="mt-1 font-black text-slate-950">
-              Chưa có dữ liệu hôm nay
+              ChÆ°a cÃ³ dá»¯ liá»‡u hÃ´m nay
             </h3>
             <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
-              Mẹ hãy ghi nhận cữ sữa, giấc ngủ hoặc bữa ăn đầu tiên để Mind AI
-              nhắc chính xác hơn.
+              Máº¹ hÃ£y ghi nháº­n cá»¯ sá»¯a, giáº¥c ngá»§ hoáº·c bá»¯a Äƒn Ä‘áº§u tiÃªn Ä‘á»ƒ Mind AI
+              nháº¯c chÃ­nh xÃ¡c hÆ¡n.
             </p>
 
             <Link
               href="/tracking"
               className="mt-3 inline-flex rounded-full bg-pink-500 px-4 py-2 text-xs font-black text-white shadow-sm shadow-pink-200 transition active:scale-[0.98]"
             >
-              Mở Track →
+              Má»Ÿ Track â†’
             </Link>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function SmartReminderCard() {
       <section className="rounded-4xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
         <div className="flex items-start gap-3">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-xl ring-1 ring-emerald-100">
-            ✅
+            âœ…
           </div>
 
           <div className="min-w-0 flex-1">
@@ -166,14 +166,14 @@ export default function SmartReminderCard() {
                 Smart Reminder
               </p>
               <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-600 ring-1 ring-emerald-100">
-                Ổn định
+                á»”n Ä‘á»‹nh
               </span>
             </div>
 
-            <h3 className="mt-1 font-black text-slate-950">Mọi thứ đang ổn</h3>
+            <h3 className="mt-1 font-black text-slate-950">Má»i thá»© Ä‘ang á»•n</h3>
             <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
-              Chưa có việc cần nhắc ngay. Tiếp tục ghi nhận đều để Mind AI gợi ý
-              chính xác hơn.
+              ChÆ°a cÃ³ viá»‡c cáº§n nháº¯c ngay. Tiáº¿p tá»¥c ghi nháº­n Ä‘á»u Ä‘á»ƒ Mind AI gá»£i Ã½
+              chÃ­nh xÃ¡c hÆ¡n.
             </p>
           </div>
         </div>
@@ -240,16 +240,16 @@ export default function SmartReminderCard() {
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
                       {reminder.kind === "milk"
-                        ? "Cữ sữa"
+                        ? "Cá»¯ sá»¯a"
                         : reminder.kind === "sleep"
-                          ? "Giấc ngủ"
+                          ? "Giáº¥c ngá»§"
                           : reminder.kind === "diaper"
-                            ? "Thay tã"
-                            : "Bữa ăn"}
+                            ? "Thay tÃ£"
+                            : "Bá»¯a Äƒn"}
                     </span>
 
                     <span className="shrink-0 text-xs font-black text-pink-500">
-                      {reminder.actionLabel} →
+                      {reminder.actionLabel} â†’
                     </span>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
-import AppShell from "@/components/layout/AppShell";
-import ReminderCenter from "@/components/reminders/ReminderCenter";
+﻿import AppShell from "@/components/layout/AppShell";
+import { ReminderCenter } from "@/features/reminders";
 
 export default function RemindersPage() {
   return (
@@ -15,16 +15,16 @@ export default function RemindersPage() {
               <div className="mt-3 flex items-start justify-between gap-4">
                 <div>
                   <h1 className="text-2xl font-black leading-tight">
-                    Nhắc lịch chăm bé
+                    Nháº¯c lá»‹ch chÄƒm bÃ©
                   </h1>
                   <p className="mt-2 text-sm font-semibold leading-6 text-white/80">
-                    Tạo nhắc cữ sữa, ngủ, thuốc, hút sữa và lịch riêng cho
+                    Táº¡o nháº¯c cá»¯ sá»¯a, ngá»§, thuá»‘c, hÃºt sá»¯a vÃ  lá»‹ch riÃªng cho
                     Matcha & Mochi.
                   </p>
                 </div>
 
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-white/20 text-3xl shadow-inner ring-1 ring-white/25">
-                  ⏰
+                  â°
                 </div>
               </div>
             </div>

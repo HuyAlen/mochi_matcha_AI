@@ -27,6 +27,29 @@ function createReminderId() {
   return `reminder-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function scheduleReminderSafely(reminder: Reminder) {
+  void scheduleNativeReminder(reminder).then((scheduled) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[MindAI Reminder] Native schedule result", {
+        id: reminder.id,
+        remindAt: reminder.remindAt,
+        scheduled,
+      });
+    }
+  });
+}
+
+function cancelReminderSafely(id: string) {
+  void cancelNativeReminder(id).then((cancelled) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[MindAI Reminder] Native cancel result", {
+        id,
+        cancelled,
+      });
+    }
+  });
+}
+
 export function getDefaultReminderTitle(type: ReminderType) {
   switch (type) {
     case "feed":
@@ -107,10 +130,14 @@ export function upsertReminder(reminder: Reminder): Reminder {
 
   emitReminderChange();
 
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[MindAI Reminder] Saved locally", nextReminder);
+  }
+
   if (nextReminder.status === "active" && nextReminder.enabled) {
-    void scheduleNativeReminder(nextReminder);
+    scheduleReminderSafely(nextReminder);
   } else {
-    void cancelNativeReminder(nextReminder.id);
+    cancelReminderSafely(nextReminder.id);
   }
 
   return nextReminder;
@@ -142,9 +169,9 @@ export function updateReminderStatus(
   emitReminderChange();
 
   if (status === "active" && updatedReminder) {
-    void scheduleNativeReminder(updatedReminder);
+    scheduleReminderSafely(updatedReminder);
   } else {
-    void cancelNativeReminder(id);
+    cancelReminderSafely(id);
   }
 
   return updatedReminder;
@@ -153,7 +180,7 @@ export function updateReminderStatus(
 export function deleteReminder(id: string) {
   useReminderStore.getState().deleteReminder(id);
   emitReminderChange();
-  void cancelNativeReminder(id);
+  cancelReminderSafely(id);
 }
 
 export function formatReminderDateTime(value: string) {
