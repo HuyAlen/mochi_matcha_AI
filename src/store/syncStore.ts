@@ -2,10 +2,10 @@
 
 import { create } from "zustand";
 
-import { pullItems, pushItems } from "@/lib/supabase/sync";
 import { useBabyStore } from "@/features/babies";
-import { useVaccineStore } from "@/features/vaccines";
 import { useTrackingStore } from "@/features/tracking/store/trackingStore";
+import { useVaccineStore } from "@/features/vaccines";
+import { pullItems, pushItems } from "@/lib/supabase/sync";
 
 import type { Baby } from "@/types/baby";
 import type { TrackingEntry } from "@/types/tracking";

@@ -1,14 +1,16 @@
 ﻿"use client";
 
+import { Baby, Bell, CheckCircle2, Milk, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { babies } from "@/src/store/babyStore";
-import { useTrackingStore } from "@/src/store/trackingStore";
+
 import {
   getReminderTone,
   getSmartReminderResult,
   summarizeReminderPriorities,
   type SmartReminder,
 } from "@/features/reminders";
+import { babies } from "@/src/store/babyStore";
+import { useTrackingStore } from "@/src/store/trackingStore";
 
 function getReminderHref(quickType: string, babyId: string) {
   const params = new URLSearchParams({
@@ -23,8 +25,8 @@ function getReminderHref(quickType: string, babyId: string) {
 function getCardTitle(reminders: SmartReminder[]) {
   const hasHigh = reminders.some((reminder) => reminder.priority === "high");
 
-  if (hasHigh) return "HÃ´m nay cáº§n lÃ m";
-  return "Gá»£i Ã½ chÄƒm bÃ©";
+  if (hasHigh) return "Hôm nay cần làm";
+  return "Gợi ý chăm bé";
 }
 
 function formatTime(value: string) {
@@ -52,6 +54,13 @@ function getNextFeed(
     )[0];
 }
 
+function getKindLabel(kind: SmartReminder["kind"]) {
+  if (kind === "milk") return "Cữ sữa";
+  if (kind === "sleep") return "Giấc ngủ";
+  if (kind === "diaper") return "Thay tã";
+  return "Bữa ăn";
+}
+
 export default function SmartReminderCard() {
   const entries = useTrackingStore((state) => state.entries);
   const nextFeed = getNextFeed(entries);
@@ -63,8 +72,8 @@ export default function SmartReminderCard() {
     return (
       <section className="rounded-4xl bg-white p-4 shadow-sm ring-1 ring-pink-100">
         <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-xl ring-1 ring-pink-100">
-            ðŸ¼
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 ring-1 ring-pink-100">
+            <Milk className="h-5 w-5 text-pink-500" />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -73,27 +82,27 @@ export default function SmartReminderCard() {
                 Smart Reminder
               </p>
               <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-black text-violet-600 ring-1 ring-violet-100">
-                ÄÃ£ háº¹n bÃº
+                Đã đến cữ
               </span>
             </div>
 
             <h3 className="mt-1 font-black text-slate-950">
-              Cá»¯ bÃº tiáº¿p theo cá»§a {nextFeedBaby.name}
+              Cữ bú tiếp theo của {nextFeedBaby.name}
             </h3>
 
             <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
-              Dá»± kiáº¿n nháº¯c láº¡i lÃºc{" "}
+              Dự kiến nhắc lại lúc{" "}
               <span className="font-black text-pink-500">
                 {formatTime(nextFeed.nextFeedAt)}
               </span>
-              . Náº¿u Ä‘Ã£ cho bÃ© bÃº sá»›m hÆ¡n, máº¹ ghi cá»¯ má»›i Ä‘á»ƒ cáº­p nháº­t nháº¯c láº¡i.
+              . Nếu đã cho bé bú sớm hơn, mẹ ghi cữ mới để cập nhật nhắc lại.
             </p>
 
             <Link
               href={getReminderHref("milk", nextFeedBaby.id)}
               className="mt-3 inline-flex rounded-full bg-pink-500 px-4 py-2 text-xs font-black text-white shadow-sm shadow-pink-200 transition active:scale-[0.98]"
             >
-              Ghi cá»¯ bÃº â†’
+              Ghi cữ bú →
             </Link>
           </div>
         </div>
@@ -118,8 +127,8 @@ export default function SmartReminderCard() {
     return (
       <section className="rounded-4xl bg-white p-4 shadow-sm ring-1 ring-pink-100">
         <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-xl ring-1 ring-pink-100">
-            ðŸ“
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 ring-1 ring-violet-100">
+            <Bell className="h-5 w-5 text-violet-500" />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -128,23 +137,23 @@ export default function SmartReminderCard() {
                 Smart Reminder
               </p>
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-600 ring-1 ring-amber-100">
-                Cáº§n dá»¯ liá»‡u
+                Đang học
               </span>
             </div>
 
             <h3 className="mt-1 font-black text-slate-950">
-              ChÆ°a cÃ³ dá»¯ liá»‡u hÃ´m nay
+              Chưa có dữ liệu hôm nay
             </h3>
             <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
-              Máº¹ hÃ£y ghi nháº­n cá»¯ sá»¯a, giáº¥c ngá»§ hoáº·c bá»¯a Äƒn Ä‘áº§u tiÃªn Ä‘á»ƒ Mind AI
-              nháº¯c chÃ­nh xÃ¡c hÆ¡n.
+              Mẹ hãy ghi nhận cữ sữa, giấc ngủ hoặc bữa ăn đầu tiên để Mind AI
+              nhắc chính xác hơn.
             </p>
 
             <Link
               href="/tracking"
               className="mt-3 inline-flex rounded-full bg-pink-500 px-4 py-2 text-xs font-black text-white shadow-sm shadow-pink-200 transition active:scale-[0.98]"
             >
-              Má»Ÿ Track â†’
+              Mở Track →
             </Link>
           </div>
         </div>
@@ -156,8 +165,8 @@ export default function SmartReminderCard() {
     return (
       <section className="rounded-4xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
         <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-xl ring-1 ring-emerald-100">
-            âœ…
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 ring-1 ring-emerald-100">
+            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -166,14 +175,14 @@ export default function SmartReminderCard() {
                 Smart Reminder
               </p>
               <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-600 ring-1 ring-emerald-100">
-                á»”n Ä‘á»‹nh
+                Ổn định
               </span>
             </div>
 
-            <h3 className="mt-1 font-black text-slate-950">Má»i thá»© Ä‘ang á»•n</h3>
+            <h3 className="mt-1 font-black text-slate-950">Mọi thứ đang ổn</h3>
             <p className="mt-1 text-sm font-bold leading-6 text-slate-500">
-              ChÆ°a cÃ³ viá»‡c cáº§n nháº¯c ngay. Tiáº¿p tá»¥c ghi nháº­n Ä‘á»u Ä‘á»ƒ Mind AI gá»£i Ã½
-              chÃ­nh xÃ¡c hÆ¡n.
+              Chưa có việc cần nhắc ngay. Tiếp tục ghi nhận đều để Mind AI gợi ý
+              chính xác hơn.
             </p>
           </div>
         </div>
@@ -209,15 +218,13 @@ export default function SmartReminderCard() {
               className={`block rounded-3xl p-3 ring-1 transition active:scale-[0.99] ${tone.card}`}
             >
               <div className="flex items-start gap-3">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl shadow-sm ring-1 ring-white/80">
-                  {reminder.icon}
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-white/80">
+                  <Baby className="h-5 w-5 text-pink-500" />
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="shrink-0 text-sm">
-                      {reminder.babyEmoji}
-                    </span>
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 text-pink-400" />
                     <p className="truncate text-sm font-black text-slate-950">
                       {reminder.babyName}
                     </p>
@@ -239,17 +246,11 @@ export default function SmartReminderCard() {
 
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
-                      {reminder.kind === "milk"
-                        ? "Cá»¯ sá»¯a"
-                        : reminder.kind === "sleep"
-                          ? "Giáº¥c ngá»§"
-                          : reminder.kind === "diaper"
-                            ? "Thay tÃ£"
-                            : "Bá»¯a Äƒn"}
+                      {getKindLabel(reminder.kind)}
                     </span>
 
                     <span className="shrink-0 text-xs font-black text-pink-500">
-                      {reminder.actionLabel} â†’
+                      {reminder.actionLabel} →
                     </span>
                   </div>
                 </div>

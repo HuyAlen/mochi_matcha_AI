@@ -1,18 +1,14 @@
 ﻿"use client";
 
+import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { QuickAddSheet } from "@/features/dashboard";
 import BottomNav from "@/components/layout/BottomNav";
+import { QuickAddSheet } from "@/features/dashboard";
 
 type AppShellProps = {
   children: ReactNode;
-  /**
-   * Deprecated: BottomNav now opens the shared QuickAddSheet globally via
-   * the `mind-ai:open-quick-add` event, so page-level quick add handlers are
-   * intentionally ignored to keep every page using the same popup.
-   */
   onQuickAdd?: () => void;
 };
 
@@ -29,8 +25,8 @@ export default function AppShell({ children }: AppShellProps) {
             className="flex min-w-0 items-center gap-3 rounded-3xl text-left transition active:scale-[0.98]"
             aria-label="Go to dashboard"
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-xl shadow-sm ring-1 ring-pink-100">
-              ðŸŽ€
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-pink-100">
+              <Sparkles className="h-5 w-5 text-pink-500" />
             </div>
 
             <div className="min-w-0">
