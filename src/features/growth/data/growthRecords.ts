@@ -1,0 +1,68 @@
+import type { GrowthRecord } from "@/types/growth";
+
+export const growthRecords: GrowthRecord[] = [
+  {
+    id: "g-mochi-1",
+    babyId: "mochi",
+    date: "2026-03-16",
+    weightKg: 5.9,
+    heightCm: 62.1,
+    headCircumferenceCm: 40.1,
+  },
+  {
+    id: "g-mochi-2",
+    babyId: "mochi",
+    date: "2026-04-16",
+    weightKg: 6.4,
+    heightCm: 64.3,
+    headCircumferenceCm: 41.2,
+  },
+  {
+    id: "g-mochi-3",
+    babyId: "mochi",
+    date: "2026-05-16",
+    weightKg: 6.8,
+    heightCm: 66.5,
+    headCircumferenceCm: 42.1,
+  },
+  {
+    id: "g-mochi-4",
+    babyId: "mochi",
+    date: "2026-06-16",
+    weightKg: 7.2,
+    heightCm: 68.5,
+    headCircumferenceCm: 43.0,
+  },
+  {
+    id: "g-matcha-1",
+    babyId: "matcha",
+    date: "2026-03-16",
+    weightKg: 5.7,
+    heightCm: 61.6,
+    headCircumferenceCm: 39.9,
+  },
+  {
+    id: "g-matcha-2",
+    babyId: "matcha",
+    date: "2026-04-16",
+    weightKg: 6.1,
+    heightCm: 63.7,
+    headCircumferenceCm: 40.9,
+  },
+  {
+    id: "g-matcha-3",
+    babyId: "matcha",
+    date: "2026-05-16",
+    weightKg: 6.5,
+    heightCm: 65.7,
+    headCircumferenceCm: 41.8,
+  },
+  {
+    id: "g-matcha-4",
+    babyId: "matcha",
+    date: "2026-06-16",
+    weightKg: 6.9,
+    heightCm: 67.8,
+    headCircumferenceCm: 42.7,
+  },
+];
